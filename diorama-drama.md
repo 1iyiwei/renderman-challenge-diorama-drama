@@ -1,8 +1,14 @@
 # Diorama Drama
 
-[Google Gemini](https://share.google/aimode/pi8MZ6M7ek3HgvA9x) brainstorming below.
+## Some existing results
 
-Li-Yi Wei is joing RenderMan Art challenge https://renderman.pixar.com/challenges-join for diorama drama.
+https://www.instagram.com/p/DcyyNZCiQht/
+
+https://www.youtube.com/watch?v=xMkU4qJ6pAk
+
+[Google Gemini](https://share.google/aimode/83sZIg8oDfz9eYP3G) brainstorming below.
+
+Li-Yi Wei is joining [RenderMan Art challenge](https://renderman.pixar.com/challenges-join) for diorama drama.
 
 ## Challenge Format Overview
 The RenderMan "Diorama Drama" Art Challenge centers on creating a compelling visual narrative within a confined, miniature space.
@@ -177,3 +183,47 @@ With this pipeline, the "evidence" in your diorama can literally look like a ske
 ------------------------------
 This approach plays directly to your strengths: it keeps you in your creative flow zone for asset generation via Feather, while allowing you and Claude Code to treat scene building and shading as a pure, elegant programming exercise in RenderMan Headless.
 Would you like to start by having your coding agent generate a boilerplate Python assembly script that loads a generic asset, configures an isometric camera perspective, and outputs a test render frame? Let me know how you want to dive in!
+
+
+------------------------------
+So far we have been discussing effects and tools setup, but the story for telling the mystery is the most important. Want to brainstorm about that?
+
+------------------------------
+You are absolutely right. The theme of the challenge is explicitly "Discovery," and the rules mandate that the narrative must be carried primarily by the environment itself—using space, objects, lighting, and "forensic evidence" to make the viewer slow down and ask, "What happened?"
+Since we are working with concrete asset sets (Netflix/Tonko House’s Oni, KitBash3D, and BigMediumSmall), we should weave a mystery that leverages these worlds.
+Here are three distinct, story-first mystery concepts that focus entirely on the narrative arc, spatial layout, and environmental clues, leaving the specific asset packs to dictate the setting.
+------------------------------
+## Concept 1: The Abrupt Interruption (The Narrative of Panic)
+
+* The Core Story: A character was on the absolute brink of a massive breakthrough or discovery when something or someone forced them to vanish instantly. They didn’t have time to pack, clean, or hide their work.
+* The Spatial Mystery: The diorama is split diagonally by an invisible line of action. One side of the room is perfectly orderly, representing days of methodical work. The other side is total, sudden chaos.
+* The Forensic Clues (The Environment Tells the Story):
+* The Focal Point: A primary asset (a heavy desk, a control panel, or an ancient shrine altar) sits dead center. A stool or chair is knocked completely flat on the floor behind it—not just pushed back, but tipped over hard, pointing away from the desk.
+   * The Trajectory of Flight: Dropped items create a physical trail leading toward the edge of the isometric platform. For example, a scattered stack of papers, a dropped tool, or a spilled container where the liquid is still pooling in a specific directional streak.
+   * The Unattended Element: Something was left running that shouldn't be. A generator emitting a low glow, a lantern knocked onto its side threatening to burn a blueprint, or a machine overheating.
+* The "What Happened?" Question: Did they run away in terror, or were they dragged out? The clue is in the footprints or scuff marks on the floor.
+
+## Concept 2: The Silent Implosion (The Narrative of Micro-Scale Sabotage)
+
+* The Core Story: From a distance, everything looks completely normal, peaceful, and intact. But upon closer inspection, a catastrophic, quiet structural failure or sabotage has occurred at a microscopic level, freezing the scene in a state of suspended animation.
+* The Spatial Mystery: This utilizes a "nested" narrative layout. The overall isometric view looks like a stable environment (e.g., a quiet village street from Oni or a clean architectural interior). The mystery is concentrated entirely on a single, tiny point of intersection where two objects meet.
+* The Forensic Clues (The Environment Tells the Story):
+* The Focal Point: A central, structural support pillar, a bridge joint, or a vital machine gear is cleanly fractured. The break isn't jagged from an explosion; it’s a perfectly flat, clean, mathematical slice.
+   * The Contamination: Creeping outward from that clean fracture is a subtle, unnatural change in material texture. The stone or metal is turning into a strange, crystalline pattern, or dissolving into fine, structured dust that defies natural weathering.
+   * The Witness Objects: Everyday items nearby are frozen in place. A bowl of food or a tool is sitting exactly where it belongs, but it has a layer of this identical, strange dust falling perfectly vertically onto it, showing that whatever happened, happened silently and instantly without shaking the room.
+* The "What Happened?" Question: Was this a natural curse, a high-tech weapon, or a deliberate structural assassination? The viewer has to look at the boundaries of the corruption to find out.
+
+## Concept 3: The Temporal Intersection (The Narrative of Displaced Eras)
+
+* The Core Story: Two entirely different timelines, worlds, or cultures have momentarily clipped into each other in this exact tiny coordinate of space, leaving a physical paradox behind.
+* The Spatial Mystery: This plays heavily on a thematic clash. You use the main assets from one specific pack (for example, the beautiful, historic, organic folklore world of Oni: Thunder God's Tale) to establish 90% of the diorama's identity. Then, you introduce an environmental element that absolutely does not belong.
+* The Forensic Clues (The Environment Tells the Story):
+* The Focal Point: Embedded deeply into an ancient stone wall, a muddy riverbank, or a wooden shrine structure is an object from an entirely different era—perhaps a highly modern, industrial mechanical gear, a pristine piece of glass hardware, or a strange electronic relic.
+   * The Physical Impact: The surrounding environment shows how it arrived. The ancient tree roots or stone bricks have warped, bent, or grown distorted around the foreign object over time, proving it wasn't just dropped there yesterday—it has physically merged with the timeline.
+   * The Investigation Trail: A single, historical character asset is present, but they are positioned facing away from the viewer, staring intently at the anomaly, holding a primitive tool or lantern as if they've been trying to decipher it for years.
+* The "What Happened?" Question: Is this an accidental time slip, a forgotten ancient technology, or a sign of a looming invasion?
+
+------------------------------
+## Developing the Plot
+Each of these structures gives you a solid foundation to build upon. Concept 1 is high-drama and kinetic; Concept 2 rewards deep, microscopic observation; Concept 3 plays with high-concept thematic contrast.
+Which of these basic narrative angles speaks to the kind of mystery you want to tell? Once we pick a narrative skeleton, we can look at the provided assets and decide exactly what the central "clue" asset will be.
