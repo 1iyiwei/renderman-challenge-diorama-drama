@@ -2,11 +2,11 @@
 
 ## Some existing results
 
-https://www.instagram.com/p/DcyyNZCiQht/
+* [Instagram](https://www.instagram.com/p/DcyyNZCiQht/)
+* [YouTube video for critique](https://www.youtube.com/watch?v=xMkU4qJ6pAk)
 
-https://www.youtube.com/watch?v=xMkU4qJ6pAk
 
-[Google Gemini](https://share.google/aimode/83sZIg8oDfz9eYP3G) brainstorming below.
+[Google Gemini](https://share.google/aimode/iRXC9GZvsMFlgQe1G) brainstorming below.
 
 Li-Yi Wei is joining [RenderMan Art challenge](https://renderman.pixar.com/challenges-join) for diorama drama.
 
@@ -135,7 +135,7 @@ To narrow down the pipeline setup, which DCC platforms do you currently have ins
 
 
 ------------------------------
-I actually only used Blender lightly before to build a simple 3D perfume bottle https://www.behance.net/gallery/115908067/PerfumeBottle. I am more of a "drawing/sketching" person, so I did several 3D sketches via https://www.feather.art/.
+I actually only used Blender lightly before to build [a simple 3D perfume bottle](https://www.behance.net/gallery/115908067/PerfumeBottle). I am more of a "drawing/sketching" person, so I did several 3D sketches via https://www.feather.art/.
 
 Knowing that you lean strongly into a "drawing/sketching" aesthetic and have hands-on experience creating in 3D via Feather completely shifts the strategy for this challenge.
 Instead of trying to fight a heavy, traditional 3D DCC interface that you aren't as familiar with, you can turn your love for 3D sketching and your technical depth in sampling/noise into a highly unique "Hand-Drawn 3D / Math-Art" fusion. This would stand out immensely among a sea of purely photorealistic asset placements.
@@ -192,6 +192,7 @@ So far we have been discussing effects and tools setup, but the story for tellin
 You are absolutely right. The theme of the challenge is explicitly "Discovery," and the rules mandate that the narrative must be carried primarily by the environment itself—using space, objects, lighting, and "forensic evidence" to make the viewer slow down and ask, "What happened?"
 Since we are working with concrete asset sets (Netflix/Tonko House’s Oni, KitBash3D, and BigMediumSmall), we should weave a mystery that leverages these worlds.
 Here are three distinct, story-first mystery concepts that focus entirely on the narrative arc, spatial layout, and environmental clues, leaving the specific asset packs to dictate the setting.
+
 ------------------------------
 ## Concept 1: The Abrupt Interruption (The Narrative of Panic)
 
@@ -227,3 +228,128 @@ Here are three distinct, story-first mystery concepts that focus entirely on the
 ## Developing the Plot
 Each of these structures gives you a solid foundation to build upon. Concept 1 is high-drama and kinetic; Concept 2 rewards deep, microscopic observation; Concept 3 plays with high-concept thematic contrast.
 Which of these basic narrative angles speaks to the kind of mystery you want to tell? Once we pick a narrative skeleton, we can look at the provided assets and decide exactly what the central "clue" asset will be.
+
+
+------------------------------
+How much time do people usually spend on this challenge? I wonder if I am joining too late.
+
+------------------------------
+You are definitely not too late to join.
+While the official challenge window spans roughly three months (July 22 to October 19, 2026), the actual time active participants spend hands-on varies widely based on their production pipeline:
+
+* The Hobbyist Track (40–60+ hours): Many traditional 3D artists spend weeks manually kit-bashing assets, modeling complex custom focal pieces, painting custom textures, and iterating through slow local test renders.
+* The Procedural/Technical Track (15–25 hours): For technical directors and graphics researchers who lean heavily on code, math, and scripting, the timeline shrinks drastically.
+
+## Why Your Timeline is Perfect
+With exactly 15 days remaining until the October 19th midnight deadline, you are in an ideal position to execute a hyper-focused, competitive entry for two key reasons:
+
+   1. No Core Modeling Time Required: The challenge rules explicitly state that you must use the supplied models for the main story arc. Bypassing the heavy, time-consuming phase of sculpting and modeling principal assets saves you dozens of hours up front.
+   2. Code-Driven Execution Speed: Since you are pairing a terminal-based coding agent (Claude Code) with RenderMan Headless, you can completely bypass the clunky, click-heavy visual workflows of massive DCC suites. An agent can generate procedural noise shaders, coordinate randomized point-cloud distributions for your support sketches, and set up your scene layout via clean scripts in a fraction of the time it takes to build them manually in a UI.
+
+## A Lean 2-Week Sprint Plan
+To comfortably hit the deadline without burning out, you can break the remaining two weeks into simple, targeted milestones:
+
+* Days 1–3 (Composition & Layout): Grab the asset packages, have your agent draft a quick Python assembly script to place the models isometrically, and establish your core dramatic lighting setup.
+* Days 4–8 (The Math & Shading Clues): Write your custom OSL code for the specific sampling, aliasing, or noise artifacts that will serve as the "forensic evidence" of your mystery.
+* Days 9–11 (Added-Value Sketching): Spend a few focused hours drawing your environmental support assets (like drifting dust clouds, trailing debris, or creeping vines) inside Feather, then let your script instance them into the scene.
+* Days 12–15 (Baking & Rendering): Run your high-resolution passes through RenderMan XPU, tweak your multi-layered AOV composites, and submit.
+
+Would you like to narrow down which of our three mystery concepts (The Panic, The Micro-Sabotage, or The Timeline Paradox) you want to build your layout script for?
+
+
+------------------------------
+How about I look at the provided 3D assets to get some inspirations?
+
+------------------------------
+That is the absolute best way to anchor the mystery. Letting the visual design of the official assets dictate the story ensures everything feels completely cohesive and intentional.
+Since you are running your workflow headless via scripts, let's locate where the challenge files are stored on your system so we can inspect the exact model names and hierarchy.
+Do you already have the challenge zip files downloaded and unpacked under a project directory? If you want, tell me the path to your project folder, and we can run a quick terminal command with your coding agent to list the .usd, .obj, or .fbx filenames across the BigMediumSmall, KitBash3D, and Tonko House (Oni) directories to see exactly what pieces we have to play with!
+
+
+------------------------------
+## Concept: Paper Soul (working title "4:07 a.m.")
+
+Seed: on Aug 9, early morning, I dreamed of myself as a drifting soul, like a piece of paper floating around during a restless sleep.
+
+Folklore hook: the Japanese *ikiryō*, a living person's spirit that leaves the body during sleep.
+
+### Story
+
+An old woman has dozed off on her stool while reading the newspaper before dawn.
+Her spirit is slipping out of her body as paper, drifting toward the window.
+Whether it will make it back is left open.
+
+### The center character
+
+`31_OldWoman_Sit6_Reading` (BigMediumSmall, WaterVillage crowd pack): an old woman on a wooden stool holding up a broadsheet newspaper, wearing a woven straw hat and a straw rain cape, with a small basket at her hip.
+
+* The newspaper and hat hide her face, so the viewer cannot tell whether she is awake or asleep. Good ambiguity.
+* Her straw rain cape (*mino*) has the same form as the `kakuremino`, the invisibility cape. Visual rhyme: the cape on her body vs the empty one on the wall.
+* The newspaper is the natural source of the "paper soul": the drifting scraps are torn from it.
+* The model is a posed mesh, not a rig, so making her head droop will need sculpting or a pose tweak.
+
+### Forensic evidence (roughly in viewing order)
+
+1. Holes or blank patches in the newspaper. Words have lifted off the page (dithered or blue-noise dissolve of the print texture).
+2. A trail of paper scraps from her to the window. Near her they are flat torn scraps; along the path they progressively fold; at the window they become the `origami` crane.
+3. A thin string from her finger to the crane, like a kite line (string pieces from `bentoNaridon` or a custom curve).
+4. The `cutleryKnife` lying right next to the string: will someone cut it? Will she wake up?
+5. The `clock` stopped at the hour of the dream (actual wake-up time on Aug 9, if remembered).
+6. The `setsubun_bagClosed` still tied shut: the spirit-warding bean throwing never happened, so the house was unguarded.
+7. The `kakuremino` hanging empty on the wall: something invisible is already here. Maybe the "oni" is her own wandering spirit.
+
+Layers of reading: (surface) an old woman fell asleep reading → (closer) her spirit is leaving as paper → (closest) knife, unopened bean bag, empty cape: will she return?
+
+### Lighting
+
+Cold blue pre-dawn light through the window vs a warm lantern by her stool. The paper trail crosses from warm to cold: leaving the safe zone.
+
+### Where my expertise shows
+
+* Blue-noise / Poisson-disk distribution of paper scraps along the path, dense near her and sparse at the window.
+* Procedural folding sequence from flat sheet to crane (scripted in Blender).
+* Paper translucency / subsurface scattering in backlight.
+* Dithered dissolve of the newspaper print.
+* Optional: tear shapes or string sketched by hand in Feather.
+
+### Variations
+
+* The dreamer as myself: a sketching desk instead of a newspaper; the paper soul is made of my own drawings.
+* Reversed: paper drifting back in through the window and unfolding as it nears her. A waking-up scene instead of a leaving one.
+
+### Asset inventory
+
+| Story element | Source | Status |
+|---|---|---|
+| Old woman reading, stool, newspaper, basket | BigMediumSmall `31_OldWoman_Sit6_Reading` | have |
+| Origami crane, clock, knife, bean bag, invisibility cape | Netflix/Oni | have |
+| Hanging scroll, cabinet, bonsai, bentos, basket | Netflix/Oni (optional set dressing) | have |
+| Set: house, veranda, ground base | KitBash3D Wood Collector (see set candidates below) | have |
+| Lantern | Wood Collector's hanging paper lanterns | have |
+| Drifting paper scraps and folding stages | custom support asset (procedural) | to build |
+| String / kite line | custom curve, or bento string pieces | to build |
+| Scattered beans (optional) | custom support asset | to build |
+
+Open questions:
+
+* The newspaper is Chinese (*Ta Kung Pao*), while the folklore and props are Japanese. Either embrace a generic East Asian setting, or lean on the paper rather than the print.
+* Which part of the Wood Collector to frame (see set candidates below).
+
+### KitBash3D set candidates
+
+Downloaded via Cargo into `assets/KitBash3D/`.
+Previews with the old woman for scale: `build/preview/sets_contact.png` (from `tools/preview_set.py`).
+
+| Set | Size | Fit for Paper Soul |
+|---|---|---|
+| **Wood Collector** (main pick) | 13.5 × 14.5 × 7.5 m | Thatched Japanese farmhouse; matches the Oni props. Already sits on a round grassy base, so it reads as a diorama. Hanging paper lanterns give the warm light. |
+| RuinD | 9 × 9 × 6 m | Roofless stone shell; paper rising out into the sky is a strong image, and the BigMediumSmall mud ground fits. But European stone clashes with the Japanese props and reads "abandoned" (ghost, not sleeper). |
+| Gazebo | 8 × 8 × 8 m | Handsome but formal; adds little story. |
+| OffRoader | 9.6 × 9.6 × 3 m | Modern campsite; contrast, but the Oni household props make no sense there. A different story. |
+| Eclectic Living Room | 4.5 × 3.5 × 2 m | Wild card: modern furniture set (no walls). The dreamer's own world: a rumpled throw on the sofa, an empty seat, and the old woman sitting in it out of place, as if the dream crossed between eras. Most personal and surreal. |
+
+Plan with Wood Collector:
+
+* She sits on the veranda before dawn, warm lantern light behind her, the paper trail drifting off the edge of the base into the cold sky. No window or cut-away wall needed.
+* Scale: the house dwarfs her (13.5 m vs 1.5 m), and the image must center on her, so frame one corner (veranda, doorway, woodpile) rather than the whole house.
+* Optional: borrow one or two Eclectic Living Room props (the throw blanket, a book) as a quiet out-of-place clue.

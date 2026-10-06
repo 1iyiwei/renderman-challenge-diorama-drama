@@ -1,0 +1,5 @@
+assets/*
+!assets/.gitkeep
+build/
+*.blend1
+.DS_Store
