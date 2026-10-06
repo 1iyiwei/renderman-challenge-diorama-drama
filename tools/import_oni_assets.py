@@ -9,7 +9,7 @@ the .usda (Principled BSDF with UDIM PNGs).
 Usage:
   Inside Blender: open in the Scripting tab and Run Script.
   Headless:
-    Blender -b --python tools/import_oni_assets.py -- [out.blend] [asset ...]
+    Blender -b --python tools/import_oni_assets.py -- assets/derived/oni_assets.blend [asset ...]
 """
 
 import os
@@ -179,11 +179,16 @@ def import_asset(usd_file, x_offset):
     roots = [o for o in new_objs if o.parent is None]
     meshes = [o for o in new_objs if o.type == "MESH"]
     bpy.context.view_layer.update()
-    xs = [(o.matrix_world @ Vector(c)).x for o in meshes for c in o.bound_box] or [0.0]
-    width = max(xs) - min(xs)
+    pts = [o.matrix_world @ Vector(c) for o in meshes for c in o.bound_box] or [Vector()]
+    lo = Vector([min(p[i] for p in pts) for i in range(3)])
+    hi = Vector([max(p[i] for p in pts) for i in range(3)])
+    width = hi.x - lo.x
     for r in roots:
-        r.location.x += x_offset - min(xs)
-    print(f"[oni] {name}: {len(meshes)} meshes, width {width:.3f} m, abc={os.path.relpath(abc, ROOT)}")
+        r.location.x += x_offset - lo.x
+    # Pivot for collection instances: bottom center of the asset.
+    coll.instance_offset = (x_offset + width / 2, (lo.y + hi.y) / 2, lo.z)
+    dims = ", ".join(f"{v:.3f}" for v in hi - lo)
+    print(f"[oni] {name}: {len(meshes)} meshes, size ({dims}) m, abc={os.path.relpath(abc, ROOT)}")
     return width
 
 

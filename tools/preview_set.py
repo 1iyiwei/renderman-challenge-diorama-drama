@@ -83,7 +83,8 @@ def main():
     sun.data.energy = 3
     sun.rotation_euler = (0.7, 0.3, 0.9)
     scene.collection.objects.link(sun)
-    scene.render.engine = "BLENDER_EEVEE"
+    engines = {e.identifier for e in bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items}
+    scene.render.engine = "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in engines else "BLENDER_EEVEE"  # 4.x vs 5.x name
     scene.render.resolution_x, scene.render.resolution_y = 1280, 720
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = "PNG"
