@@ -11,7 +11,7 @@ created locally. Positions are Wood Collector world coordinates (meters).
 
 Usage (Blender 4.5, Intel build for RenderMan):
   Blender -b --factory-startup --addons RenderManForBlender \
-      --python tools/build_layout.py -- scenes/paper_soul_v002.blend [--force] \
+      --python tools/build_layout.py -- scenes/paper_soul_v003.blend [--force] \
       [--framing diorama|closeup] [--elevation DEGREES]
 """
 
@@ -28,7 +28,8 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(REPO, "assets")
 WOOD_COLLECTOR = os.path.join(ASSETS, "derived", "WoodCollector_rman.blend")
 WOOD_COLLECTOR_COLL = "KB3D_SHG_BldgSmWoodCollector_A"
-CHAR_BLEND = os.path.join(ASSETS, "derived", "OldWoman_rman.blend")
+# With the fracturing newspaper (tools/fracture_newspaper.py); OldWoman_rman.blend is the intact one.
+CHAR_BLEND = os.path.join(ASSETS, "derived", "OldWoman_fractured_rman.blend")
 CHAR_NAME = "31_OldWoman_Sit6_Reading"
 ONI_BLEND = os.path.join(ASSETS, "derived", "oni_assets.blend")
 
@@ -55,7 +56,7 @@ CRANE_POS = TRAIL_POINTS[-1]
 TRAIL_COUNT = 44
 TRAIL_SEED = 809  # Aug 9
 # Exaggerated for readability at full-diorama framing (dream logic, not newspaper scale).
-SCRAP_SIZE = (0.16, 0.28)
+SCRAP_SIZE = (0.05, 0.26)  # at the newspaper (fracture-cell size) -> near the crane
 TRAIL_SPREAD = 0.5
 # Glow: warm (lantern-lit newspaper) near her, cool spirit-blue toward the crane.
 GLOW_WARM, GLOW_COOL = (1.0, 0.75, 0.45), (0.7, 0.85, 1.0)
@@ -66,11 +67,14 @@ NEWSPAPER_IMAGE = os.path.join(ASSETS, "derived", "tex", "OldWoman_rman", "src",
 NEWSPAPER_TEX = os.path.join(ASSETS, "derived", "tex", "OldWoman_rman", "Papers_color.jpg.tex")
 # Printed panels of the newspaper texture atlas, in UV space (u0, v0, u1, v1).
 PRINT_REGIONS = [(0.53, 0.52, 0.87, 0.99), (0.15, 0.03, 0.49, 0.48), (0.51, 0.03, 0.87, 0.48)]
-SCRAP_UV_SIZE = (0.08, 0.16)
+UV_PER_METER = 0.9  # newspaper print density: ~0.37 UV across the 0.42 m sheet
+SCRAP_UV_MAX = 0.16
 
-# String: tied to the stool leg, along the floor past the knife, over the edge, up to the crane.
-STRING_POINTS = [(-4.85, -2.75, VERANDA_Z + 0.03), (-5.5, -2.95, VERANDA_Z + 0.004),
-                 (-5.85, -2.9, VERANDA_Z + 0.004), (-6.6, -2.6, 2.2), tuple(CRANE_POS)]
+NEWSPAPER_MATERIAL = "M_Papers"
+
+# String: tied to the stool leg, lying on the floor and ending, cut, beside the knife.
+STRING_POINTS = [(-4.85, -2.75, VERANDA_Z + 0.03), (-5.15, -2.9, VERANDA_Z + 0.004),
+                 (-5.35, -3.0, VERANDA_Z + 0.004), (-5.5, -3.08, VERANDA_Z + 0.004)]
 
 # Reading lantern hanging from the eave, above her and just in front (center of the lantern),
 # high enough to clear her hat from the camera.
@@ -91,7 +95,7 @@ FRAME_MARGIN = 1.05
 
 def parse_args():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    out = next((a for a in argv if a.endswith(".blend")), "scenes/paper_soul_v002.blend")
+    out = next((a for a in argv if a.endswith(".blend")), "scenes/paper_soul_v003.blend")
     framing = argv[argv.index("--framing") + 1] if "--framing" in argv else "diorama"
     elevation = float(argv[argv.index("--elevation") + 1]) if "--elevation" in argv else CAMERA_ELEVATION
     return os.path.abspath(out), "--force" in argv, framing, elevation
@@ -137,6 +141,17 @@ def add_character(parent_coll):
     rot = Matrix.Rotation(CHAR_ROT_Z, 4, "Z")
     obj.matrix_world = Matrix.Translation(CHAR_POS) @ rot @ Matrix.Translation(-pivot)
     return obj
+
+
+def newspaper_top_edge(char):
+    """World-space center of the top edge of her newspaper, where the paper trail starts.
+    (The fracture itself lives in the character asset: tools/fracture_newspaper.py.)"""
+    mesh = char.data
+    slot = next(i for i, m in enumerate(mesh.materials) if m and m.name.startswith(NEWSPAPER_MATERIAL))
+    verts = [mesh.vertices[v].co for p in mesh.polygons if p.material_index == slot for v in p.vertices]
+    top = max(v.z for v in verts)
+    edge = [v for v in verts if v.z > top - 0.04]
+    return char.matrix_world @ (sum(edge, Vector()) / len(edge))
 
 
 def rman_surface(mat, **params):
@@ -220,7 +235,7 @@ def scrap_mesh(name, size, fold, rng):
     mesh.from_pydata([c - center for c in corners], [], [(0, 1, 2), (0, 2, 3)])
     # UVs: a random patch of one printed panel, so each scrap shows a different bit of the newspaper.
     u0, v0, u1, v1 = rng.choice(PRINT_REGIONS)
-    uv_size = rng.uniform(*SCRAP_UV_SIZE)
+    uv_size = min(size * UV_PER_METER, SCRAP_UV_MAX)  # print at (roughly) true scale
     u, v = rng.uniform(u0, u1 - uv_size), rng.uniform(v0, v1 - uv_size)
     flat = [(0, 0), (1, 0), (1, 1), (0, 1)]  # corner order of the quad before folding
     uv_layer = mesh.uv_layers.new(name="UVMap")
@@ -257,17 +272,19 @@ def path_at(dense, lengths, t):
     return dense[i - 1].lerp(dense[i], f)
 
 
-def add_paper_trail(parent_coll, oni_crane):
+def add_paper_trail(parent_coll, oni_crane, start=None):
+    """Scraps along the trail from start (the newspaper's top edge) to the crane."""
     rng = random.Random(TRAIL_SEED)
     mats = glow_materials()
-    dense, lengths = catmull_rom(TRAIL_POINTS)
+    dense, lengths = catmull_rom([start or TRAIL_POINTS[0]] + TRAIL_POINTS[1:])
     for i in range(TRAIL_COUNT):
         # Stratified jitter along the path: one scrap per stratum, so spacing is even but not regular.
         t = (i + rng.uniform(0.15, 0.85)) / TRAIL_COUNT * 0.95
         pos = path_at(dense, lengths, t)
         spread = TRAIL_SPREAD * math.sin(math.pi * t)  # loose in the middle, gathered at both ends
         pos += Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.5, 0.5))) * spread
-        mesh = scrap_mesh(f"PaperScrap_{i:02d}", rng.uniform(*SCRAP_SIZE), t, rng)
+        size = (SCRAP_SIZE[0] + (SCRAP_SIZE[1] - SCRAP_SIZE[0]) * t ** 0.6) * rng.uniform(0.8, 1.2)
+        mesh = scrap_mesh(f"PaperScrap_{i:02d}", size, t, rng)
         mesh.materials.append(mats[min(int(t * GLOW_BINS), GLOW_BINS - 1)])
         obj = bpy.data.objects.new(mesh.name, mesh)
         obj.location = pos
@@ -426,10 +443,10 @@ def main():
 
     wood_collector = link_collection(WOOD_COLLECTOR, WOOD_COLLECTOR_COLL)
     instance(wood_collector, "WoodCollector", set_coll)
-    add_character(char_coll)
+    newspaper_top = newspaper_top_edge(add_character(char_coll))
     for name, loc, rot, scale in PROPS:
         instance(link_collection(ONI_BLEND, name), name, props_coll, loc, rot, scale)
-    add_paper_trail(soul_coll, link_collection(ONI_BLEND, "origami"))
+    add_paper_trail(soul_coll, link_collection(ONI_BLEND, "origami"), newspaper_top)
     add_string(soul_coll)
     add_lights(light_coll)
     add_lantern(props_coll)

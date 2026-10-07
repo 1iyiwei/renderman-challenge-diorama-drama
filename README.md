@@ -32,12 +32,18 @@ $B -b assets/source/KitBash3D/WoodCollector.blend --addons RenderManForBlender \
 $B -b "assets/source/BMS_Pixar-Collab_Assets/WaterVillage _6Crowd_Characters/WaterVillage_POSED.blend" --addons RenderManForBlender \
     --python tools/convert_to_rman.py -- assets/derived/OldWoman_rman.blend --keep 31_OldWoman_Sit6_Reading
 
-# Layout draft: links the assets/derived/ files, so the scene file stays small
-$B -b --factory-startup --python tools/build_layout.py -- scenes/paper_soul_v002.blend
+# The newspaper she reads fractures toward its top edge (OSL shader shaders/PaperFracture.osl, compiled to .oso);
+# makes a separate character file, so OldWoman_rman.blend (used by v002) stays intact
+$B -b assets/derived/OldWoman_rman.blend --addons RenderManForBlender \
+    --python tools/fracture_newspaper.py -- assets/derived/OldWoman_fractured_rman.blend
 
-# Preview through the scene camera (eevee = fast; prman = RenderMan); --report prints object positions in frame
-$B -b scenes/paper_soul_v002.blend --python tools/preview_scene.py -- build/preview/layout.png
-$B -b scenes/paper_soul_v002.blend --addons RenderManForBlender --python tools/preview_scene.py -- build/preview/layout_prman.png --engine prman
+# Layout: links the assets/derived/ files, so the scene file stays small (v003 = with the fracture)
+$B -b --factory-startup --python tools/build_layout.py -- scenes/paper_soul_v003.blend
+
+# Preview through the scene camera (eevee = fast; prman = RenderMan); --report prints object positions in frame;
+# --focus x,y,z --ortho SIZE zooms in (e.g. on the newspaper: --focus "-5.45,-2.4,1.75" --ortho 1.2)
+$B -b scenes/paper_soul_v003.blend --python tools/preview_scene.py -- build/preview/layout.png
+$B -b scenes/paper_soul_v003.blend --addons RenderManForBlender --python tools/preview_scene.py -- build/preview/layout_prman.png --engine prman
 ```
 
 Notes:
@@ -47,5 +53,7 @@ Notes:
   * RenderMan texture paths are written as `<blend_dir>/../assets/...`. RfB expands `<blend_dir>` to the folder of the *scene* file, even for linked libraries, so **scene files must stay in `scenes/`**.
   * Blender image paths inside the repo are relative; KitBash3D preview textures stay absolute in Cargo's `~/.kitbash3d` library (Eevee only; RenderMan uses the `.tex` copies in `assets/derived/`).
 * A RfB `RecursionError` traceback from its link-file handler while building the layout is harmless.
+* RfB takes per-face materials from the mesh and ignores object-level material slot overrides, so material changes to a linked character go into its asset file (as `fracture_newspaper.py` does), not the scene.
+* `shaders/*.oso` is committed with its `.osl` source so the cloud renderer can load it.
 
 `tools/preview_set.py` renders a KitBash3D set with the old woman for scale.

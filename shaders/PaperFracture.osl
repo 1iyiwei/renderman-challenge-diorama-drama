@@ -1,0 +1,56 @@
+/*
+ * PaperFracture: a sheet of paper that breaks apart toward its top edge.
+ *
+ * 3D Voronoi cells in object space. Each cell is removed (presence 0) with a
+ * probability that rises with the height of its feature point, from 0 at
+ * startHeight to maxRemove at endHeight, so the paper stays whole at the bottom
+ * and dissolves into pieces at the top. Using the cell's feature point (not the
+ * shading point) keeps every cell either whole or gone, with no straight cuts.
+ * Cracks: the shade output darkens cell borders where fracturing has begun
+ * (multiply it onto the paper color).
+ *
+ * Compile: $RMANTREE/bin/oslc PaperFracture.osl  (tools/fracture_newspaper.py does it)
+ */
+
+shader PaperFracture(
+    float cellSize = 0.045,        // Voronoi cell size, object-space units (meters)
+    float jitter = 0.9,            // 0 = regular grid, 1 = fully jittered feature points
+    float startHeight = 1.0,       // object-space z where fracturing begins
+    float endHeight = 1.32,        // object-space z of the top edge
+    float maxRemove = 0.97,        // removal probability reached at endHeight
+    float crackWidth = 0.004,      // crack line width (meters)
+    float crackDarkness = 0.65,    // how dark the crack lines get
+    int seed = 809,
+    output float presence = 1,
+    output color shade = color(1), // multiply onto the paper color: dark along cracks
+    output float crack = 0)
+{
+    point Po = transform("object", P) / cellSize;
+    point cell = floor(Po);
+    float d1 = 1e9, d2 = 1e9;
+    point f1 = point(0);
+    for (int i = -1; i <= 1; i++)
+        for (int j = -1; j <= 1; j++)
+            for (int k = -1; k <= 1; k++) {
+                point cc = cell + vector(i, j, k);
+                vector rnd = cellnoise(cc, (float)seed);
+                point fp = cc + 0.5 + jitter * (rnd - 0.5);
+                float d = distance(Po, fp);
+                if (d < d1) {
+                    d2 = d1;
+                    d1 = d;
+                    f1 = fp;
+                } else if (d < d2) {
+                    d2 = d;
+                }
+            }
+
+    float t = smoothstep(startHeight, endHeight, f1[2] * cellSize);
+    float r = cellnoise(f1, (float)seed + 101.0);
+    presence = (r < t * maxRemove) ? 0.0 : 1.0;
+
+    // (d2 - d1) is ~twice the distance to the nearest cell border.
+    float border = 0.5 * (d2 - d1) * cellSize;
+    crack = (1.0 - smoothstep(0.0, crackWidth, border)) * smoothstep(0.0, 0.25, t);
+    shade = color(1.0 - crackDarkness * crack);
+}

@@ -2,7 +2,8 @@
 
 Usage:
   Blender -b scenes/<scene>.blend [--addons RenderManForBlender] \
-      --python tools/preview_scene.py -- <out.png> [--engine eevee|prman] [--percent N] [--report]
+      --python tools/preview_scene.py -- <out.png> [--engine eevee|prman] [--percent N] [--report] \
+      [--focus x,y,z --ortho SIZE]
 
 eevee (default) is a fast layout check; prman renders with RenderMan
 (RIS on macOS) to check that materials and lights translate.
@@ -26,6 +27,13 @@ else:
     engines = {e.identifier for e in bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items}
     scene.render.engine = "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in engines else "BLENDER_EEVEE"
 scene.render.resolution_percentage = percent
+if "--focus" in argv:  # zoom the scene camera onto a point: --focus x,y,z --ortho size
+    from mathutils import Vector
+    target = Vector([float(v) for v in argv[argv.index("--focus") + 1].split(",")])
+    cam = scene.camera
+    forward = cam.matrix_world.to_3x3() @ Vector((0, 0, -1))
+    cam.location = target - forward * 40
+    cam.data.ortho_scale = float(argv[argv.index("--ortho") + 1]) if "--ortho" in argv else 2.0
 scene.render.image_settings.file_format = "PNG"
 scene.render.filepath = out
 if "--report" in argv:
