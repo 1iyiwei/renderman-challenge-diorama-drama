@@ -32,11 +32,11 @@ $B -b "assets/BMS_Pixar-Collab_Assets/WaterVillage _6Crowd_Characters/WaterVilla
     --python tools/convert_to_rman.py -- assets/derived/OldWoman_rman.blend --keep 31_OldWoman_Sit6_Reading
 
 # Layout draft: links the assets/derived/ files, so the scene file stays small
-$B -b --factory-startup --python tools/build_layout.py -- scenes/paper_soul_v001.blend
+$B -b --factory-startup --python tools/build_layout.py -- scenes/paper_soul_v002.blend
 
 # Preview through the scene camera (eevee = fast; prman = RenderMan); --report prints object positions in frame
-$B -b scenes/paper_soul_v001.blend --python tools/preview_scene.py -- build/preview/layout.png
-$B -b scenes/paper_soul_v001.blend --addons RenderManForBlender --python tools/preview_scene.py -- build/preview/layout_prman.png --engine prman
+$B -b scenes/paper_soul_v002.blend --python tools/preview_scene.py -- build/preview/layout.png
+$B -b scenes/paper_soul_v002.blend --addons RenderManForBlender --python tools/preview_scene.py -- build/preview/layout_prman.png --engine prman
 ```
 
 Notes:

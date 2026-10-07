@@ -11,7 +11,8 @@ created locally. Positions are Wood Collector world coordinates (meters).
 
 Usage (Blender 4.5, Intel build for RenderMan):
   Blender -b --factory-startup --addons RenderManForBlender \
-      --python tools/build_layout.py -- scenes/paper_soul_v001.blend [--force]
+      --python tools/build_layout.py -- scenes/paper_soul_v002.blend [--force] \
+      [--framing diorama|closeup] [--elevation DEGREES]
 """
 
 import math
@@ -45,27 +46,42 @@ PROPS = [
     ("cutleryKnife",       (-5.6, -3.2, VERANDA_Z + 0.027), (90, 0, 75), 1.0),  # beside the string
 ]
 
-# Paper trail: from the newspaper, west past the roof eave and the edge of the ground,
-# so the crane is silhouetted against the empty background on the left of the frame.
+# Paper trail: from the newspaper, out from under the eave, then rising in front of the
+# dark thatched roof (seen from the west-south-west), the crane high against the roof.
 TRAIL_START = Vector((-5.75, -2.4, 1.75))
-TRAIL_CTRL = Vector((-7.0, -2.2, 2.7))
-CRANE_POS = Vector((-8.6, -2.6, 2.2))
-TRAIL_COUNT = 26
+TRAIL_CTRL = Vector((-7.6, -2.9, 2.4))
+CRANE_POS = Vector((-7.9, -1.6, 4.6))
+TRAIL_COUNT = 32
 TRAIL_SEED = 809  # Aug 9
+# Exaggerated for readability at full-diorama framing (dream logic, not newspaper scale).
+SCRAP_SIZE = (0.16, 0.28)
+TRAIL_SPREAD = 0.5
 
 # String: tied to the stool leg, along the floor past the knife, over the edge, up to the crane.
 STRING_POINTS = [(-4.85, -2.75, VERANDA_Z + 0.03), (-5.5, -2.95, VERANDA_Z + 0.004),
-                 (-5.85, -2.9, VERANDA_Z + 0.004), (-7.2, -2.9, 1.5), tuple(CRANE_POS)]
+                 (-5.85, -2.9, VERANDA_Z + 0.004), (-7.4, -3.2, 2.2), tuple(CRANE_POS)]
 
+# Floor lantern in front of her (west, toward the camera side): the warm pool she sits in.
+LANTERN_POS = Vector((-5.5, -1.8, VERANDA_Z))
+CRANE_SCALE = 3.0
+
+# Looking from the west-south-west (Li-Yi's v002 camera azimuth), 22 degrees down:
+# a compromise between her side view (12) and isometric (~30-35).
+CAMERA_AZIMUTH = 21.0     # degrees, direction the camera looks, from +X toward +Y
+CAMERA_ELEVATION = 22.0   # degrees below horizontal
+# Framing: "diorama" fits the whole ground base (the challenge wants a tiny self-contained world);
+# "closeup" uses CAMERA_TARGET / CAMERA_ORTHO_SCALE around the veranda corner.
 CAMERA_TARGET = Vector((-5.4, -2.2, 1.7))
-CAMERA_DIR = Vector((-1, -1, 0.9))  # looking from the south-west, ~32 degrees down
 CAMERA_ORTHO_SCALE = 9.5
+FRAME_MARGIN = 1.05
 
 
 def parse_args():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    out = next((a for a in argv if a.endswith(".blend")), "scenes/paper_soul_v001.blend")
-    return os.path.abspath(out), "--force" in argv
+    out = next((a for a in argv if a.endswith(".blend")), "scenes/paper_soul_v002.blend")
+    framing = argv[argv.index("--framing") + 1] if "--framing" in argv else "diorama"
+    elevation = float(argv[argv.index("--elevation") + 1]) if "--elevation" in argv else CAMERA_ELEVATION
+    return os.path.abspath(out), "--force" in argv, framing, elevation
 
 
 def new_collection(name):
@@ -135,7 +151,8 @@ def paper_material():
     bsdf.inputs["Subsurface Radius"].default_value = (0.02, 0.015, 0.01)
     mat.use_backface_culling = False
     rman_surface(mat, diffuseColor=(0.82, 0.76, 0.62), diffuseDoubleSided=1,
-                 diffuseTransmitGain=0.45, diffuseTransmitColor=(1.0, 0.85, 0.6))  # thin paper, backlit glow
+                 diffuseTransmitGain=0.45, diffuseTransmitColor=(1.0, 0.85, 0.6),  # thin paper, backlit glow
+                 enableGlow=True, glowColor=(0.75, 0.85, 1.0), glowGain=0.08)  # faint spirit glow
     return mat
 
 
@@ -165,15 +182,15 @@ def add_paper_trail(parent_coll, oni_crane):
         # Stratified jitter along the path: one scrap per stratum, so spacing is even but not regular.
         t = (i + rng.uniform(0.15, 0.85)) / TRAIL_COUNT * 0.92
         pos = bezier(TRAIL_START, TRAIL_CTRL, CRANE_POS, t)
-        spread = 0.35 * math.sin(math.pi * t)  # loose in the middle, gathered at both ends
+        spread = TRAIL_SPREAD * math.sin(math.pi * t)  # loose in the middle, gathered at both ends
         pos += Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.5, 0.5))) * spread
-        mesh = scrap_mesh(f"PaperScrap_{i:02d}", rng.uniform(0.08, 0.14), t, rng)
+        mesh = scrap_mesh(f"PaperScrap_{i:02d}", rng.uniform(*SCRAP_SIZE), t, rng)
         mesh.materials.append(mat)
         obj = bpy.data.objects.new(mesh.name, mesh)
         obj.location = pos
         obj.rotation_euler = [rng.uniform(0, 2 * math.pi) for _ in range(3)]
         parent_coll.objects.link(obj)
-    crane = instance(oni_crane, "Crane", parent_coll, CRANE_POS, (0, 0, -135), 0.6)
+    crane = instance(oni_crane, "Crane", parent_coll, CRANE_POS, (0, 0, -135), CRANE_SCALE)
     return crane
 
 
@@ -229,27 +246,61 @@ def add_lights(parent_coll):
         return obj
 
     # Pre-dawn sky: dim blue dome (also the background).
-    light("SkyDome", "PxrDomeLight", "SUN", (0, 0, 0), (0.35, 0.5, 1.0), 0.0, {"intensity": 0.25})
-    # Cold low light from the east.
-    dawn = light("DawnSky", "PxrDistantLight", "SUN", (0, 0, 10), (0.55, 0.68, 1.0), 0.6,
-                 {"intensity": 0.6, "angleExtent": 10.0})
+    light("SkyDome", "PxrDomeLight", "SUN", (0, 0, 0), (0.3, 0.45, 1.0), 0.0, {"intensity": 0.15})
+    # Cold low moon/dawn light from the east: dimmer and bluer, so the warm lantern wins near her.
+    dawn = light("DawnSky", "PxrDistantLight", "SUN", (0, 0, 10), (0.45, 0.6, 1.0), 0.4,
+                 {"intensity": 0.35, "angleExtent": 10.0})
     dawn.rotation_euler = (math.radians(65), 0, math.radians(100))
-    # Warm practical lantern by her stool (placeholder: no lantern model yet).
-    light("LanternWarm", "PxrSphereLight", "POINT", (-4.75, -1.45, 1.35), (1.0, 0.55, 0.25), 40,
-          {"intensity": 1.0, "exposure": 6.0}, size=0.06)
+    # Warm floor lantern in front of her (light inside the lantern model).
+    light("LanternWarm", "PxrSphereLight", "POINT", LANTERN_POS + Vector((0, 0, 0.26)), (1.0, 0.55, 0.25), 60,
+          {"intensity": 1.0, "exposure": 9.0}, size=0.07)
     # Faint warm glow from the paper lantern on the south-west post.
     light("PostLantern", "PxrSphereLight", "POINT", (-5.5, -5.5, 4.2), (1.0, 0.6, 0.3), 60,
-          {"intensity": 1.0, "exposure": 6.0}, size=0.15)
+          {"intensity": 1.0, "exposure": 5.0}, size=0.15)
+    # The soul: a faint cool glow around the crane so the end of the trail reads.
+    light("SoulGlow", "PxrSphereLight", "POINT", CRANE_POS + Vector((0.15, -0.1, 0.25)), (0.75, 0.85, 1.0), 15,
+          {"intensity": 1.0, "exposure": 3.5}, size=0.05)
 
 
-def add_camera(parent_coll):
+def add_lantern(parent_coll):
+    """Placeholder floor lantern: a glowing paper cylinder around the LanternWarm light."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=0.11, depth=0.32,
+                                        location=LANTERN_POS + Vector((0, 0, 0.16)))
+    obj = bpy.context.object
+    obj.name = "FloorLantern"
+    for coll in list(obj.users_collection):
+        coll.objects.unlink(obj)
+    parent_coll.objects.link(obj)
+    mat = bpy.data.materials.new("LanternPaper")
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = (0.9, 0.8, 0.6, 1)
+    bsdf.inputs["Emission Color"].default_value = (1.0, 0.6, 0.3, 1)
+    bsdf.inputs["Emission Strength"].default_value = 3.0
+    rman_surface(mat, diffuseColor=(0.9, 0.8, 0.6), enableGlow=True,
+                 glowColor=(1.0, 0.6, 0.3), glowGain=2.0)
+    obj.data.materials.append(mat)
+    if hasattr(obj, "renderman"):
+        obj.renderman.rman_visibilityTransmission = "0"  # let the light inside shine through
+
+
+def add_camera(parent_coll, elevation, fit_points=None):
+    """Orthographic camera; with fit_points, framed to contain them all."""
     cam = bpy.data.objects.new("DioramaCam", bpy.data.cameras.new("DioramaCam"))
-    d = CAMERA_DIR.normalized()
-    cam.location = CAMERA_TARGET + d * 30
+    az, el = math.radians(CAMERA_AZIMUTH), math.radians(elevation)
+    d = -Vector((math.cos(az) * math.cos(el), math.sin(az) * math.cos(el), -math.sin(el)))  # toward camera
+    cam.location = CAMERA_TARGET + d * 40
     cam.rotation_euler = (-d).to_track_quat("-Z", "Y").to_euler()
     cam.data.type = "ORTHO"
     cam.data.ortho_scale = CAMERA_ORTHO_SCALE
-    cam.data.clip_start, cam.data.clip_end = 1, 80
+    cam.data.clip_start, cam.data.clip_end = 1, 100
+    if fit_points:
+        rot = cam.rotation_euler.to_matrix()
+        local = [rot.transposed() @ (p - cam.location) for p in fit_points]
+        xs, ys = [p.x for p in local], [p.y for p in local]
+        aspect = 16 / 9
+        cam.data.ortho_scale = max(max(xs) - min(xs), (max(ys) - min(ys)) * aspect) * FRAME_MARGIN
+        cam.location += rot @ Vector(((max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2, 0))
     parent_coll.objects.link(cam)
     bpy.context.scene.camera = cam
 
@@ -266,7 +317,7 @@ def setup_render():
 
 
 def main():
-    out, force = parse_args()
+    out, force, framing, elevation = parse_args()
     if os.path.exists(out) and not force:
         raise SystemExit(f"{out} exists; bump the version number or pass --force")
     os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -279,14 +330,20 @@ def main():
     props_coll, soul_coll = new_collection("Props"), new_collection("PaperSoul")
     light_coll, cam_coll = new_collection("Lights"), new_collection("Camera")
 
-    instance(link_collection(WOOD_COLLECTOR, WOOD_COLLECTOR_COLL), "WoodCollector", set_coll)
+    wood_collector = link_collection(WOOD_COLLECTOR, WOOD_COLLECTOR_COLL)
+    instance(wood_collector, "WoodCollector", set_coll)
     add_character(char_coll)
     for name, loc, rot, scale in PROPS:
         instance(link_collection(ONI_BLEND, name), name, props_coll, loc, rot, scale)
     add_paper_trail(soul_coll, link_collection(ONI_BLEND, "origami"))
     add_string(soul_coll)
     add_lights(light_coll)
-    add_camera(cam_coll)
+    add_lantern(props_coll)
+    fit = None
+    if framing == "diorama":  # whole ground base, house and the crane at the end of the trail
+        fit = [o.matrix_world @ Vector(c) for o in wood_collector.all_objects if o.type == "MESH"
+               for c in o.bound_box] + [CRANE_POS]
+    add_camera(cam_coll, elevation, fit)
     setup_render()
 
     bpy.ops.wm.save_as_mainfile(filepath=out)

@@ -1,5 +1,9 @@
 # Diorama Drama
 
+## My WIP thread
+
+* [Discord WIP post](https://discord.com/channels/479703857883250698/1557180427838562304) (Paper Soul layout previews)
+
 ## Some existing results
 
 * [Instagram](https://www.instagram.com/p/DcyyNZCiQht/)
