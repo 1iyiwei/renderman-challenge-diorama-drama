@@ -1,11 +1,11 @@
 """Build a first-draft layout .blend for the "Paper Soul" diorama.
 
-Everything heavy is *linked* (not copied) from assets/, so the scene file
-stays small enough for git:
-  - KitBash3D Wood Collector house (collection instance)
-  - BigMediumSmall old woman reading (local object using the linked mesh)
-  - Oni props from assets/derived/oni_assets.blend (collection instances;
-    build that first with tools/import_oni_assets.py)
+Everything heavy is *linked* (not copied) from the RenderMan-ready copies in
+assets/derived/, so the scene file stays small enough for git:
+  - KitBash3D Wood Collector house (collection instance), WoodCollector_rman.blend
+  - BigMediumSmall old woman reading (local object using the linked mesh), OldWoman_rman.blend
+    (make both with tools/convert_to_rman.py; see README)
+  - Oni props (collection instances), oni_assets.blend from tools/import_oni_assets.py
 Placeholder story elements (paper trail, string) and lights/camera are
 created locally. Positions are Wood Collector world coordinates (meters).
 
@@ -25,10 +25,9 @@ from mathutils import Matrix, Vector
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(REPO, "assets")
-WOOD_COLLECTOR = os.path.join(ASSETS, "KitBash3D", "WoodCollector.blend")
+WOOD_COLLECTOR = os.path.join(ASSETS, "derived", "WoodCollector_rman.blend")
 WOOD_COLLECTOR_COLL = "KB3D_SHG_BldgSmWoodCollector_A"
-CHAR_BLEND = os.path.join(ASSETS, "BMS_Pixar-Collab_Assets",
-                          "WaterVillage _6Crowd_Characters", "WaterVillage_POSED.blend")
+CHAR_BLEND = os.path.join(ASSETS, "derived", "OldWoman_rman.blend")
 CHAR_NAME = "31_OldWoman_Sit6_Reading"
 ONI_BLEND = os.path.join(ASSETS, "derived", "oni_assets.blend")
 
@@ -111,6 +110,21 @@ def add_character(parent_coll):
     return obj
 
 
+def rman_surface(mat, **params):
+    """Add a RenderMan PxrSurface network to a material (alongside its Blender nodes)."""
+    if bpy.context.scene.render.engine != "PRMAN_RENDER":
+        return
+    from RenderManForBlender.rman_bl_nodes import __BL_NODES_MAP__ as nodes
+    nt = mat.node_tree
+    output = nt.nodes.new("RendermanOutputNode")
+    output.location = (400, -600)
+    surf = nt.nodes.new(nodes["PxrSurface"])
+    surf.location = (100, -600)
+    for name, value in params.items():
+        setattr(surf, name, value)
+    nt.links.new(surf.outputs["bxdf_out"], output.inputs["bxdf_in"])
+
+
 def paper_material():
     mat = bpy.data.materials.new("PaperScrap")
     mat.use_nodes = True
@@ -120,6 +134,8 @@ def paper_material():
     bsdf.inputs["Subsurface Weight"].default_value = 0.3  # thin paper glows when backlit
     bsdf.inputs["Subsurface Radius"].default_value = (0.02, 0.015, 0.01)
     mat.use_backface_culling = False
+    rman_surface(mat, diffuseColor=(0.82, 0.76, 0.62), diffuseDoubleSided=1,
+                 diffuseTransmitGain=0.45, diffuseTransmitColor=(1.0, 0.85, 0.6))  # thin paper, backlit glow
     return mat
 
 
@@ -174,6 +190,7 @@ def add_string(parent_coll):
     mat = bpy.data.materials.new("String")
     mat.use_nodes = True
     mat.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.5, 0.05, 0.04, 1)
+    rman_surface(mat, diffuseColor=(0.5, 0.05, 0.04))
     curve.materials.append(mat)
     obj = bpy.data.objects.new("SoulString", curve)
     parent_coll.objects.link(obj)
@@ -181,31 +198,48 @@ def add_string(parent_coll):
 
 
 def add_lights(parent_coll):
-    world = bpy.data.worlds.new("PreDawn")
+    """RenderMan lights when RfB is loaded (Eevee also sees them as Blender lights)."""
+    world = bpy.data.worlds.new("PreDawn")  # Eevee only; RenderMan uses the dome light
     world.use_nodes = True
     bg = world.node_tree.nodes["Background"]
     bg.inputs["Color"].default_value = (0.03, 0.045, 0.09, 1)
     bg.inputs["Strength"].default_value = 1.0
     bpy.context.scene.world = world
+    rman = bpy.context.scene.render.engine == "PRMAN_RENDER"
 
-    def light(name, kind, location, color, energy, **kw):
-        data = bpy.data.lights.new(name, kind)
-        data.color = color
-        data.energy = energy
-        for k, v in kw.items():
-            setattr(data, k, v)
-        obj = bpy.data.objects.new(name, data)
-        obj.location = location
+    def light(name, rman_type, blender_type, location, color, energy, rman_params, size=None):
+        if rman:
+            from RenderManForBlender import rfb_api
+            obj, shader = rfb_api.create_light(rman_type)
+            for coll in list(obj.users_collection):
+                coll.objects.unlink(obj)
+            for k, v in rman_params.items():
+                setattr(shader, k, v)
+            if rman_type != "PxrDomeLight":  # the dome doubles as the sky backdrop
+                obj.data.renderman.light_primary_visibility = False  # no glowing balls in frame
+            setattr(shader, "lightColor", color)
+        else:
+            obj = bpy.data.objects.new(name, bpy.data.lights.new(name, blender_type))
         parent_coll.objects.link(obj)
+        obj.name = obj.data.name = name
+        obj.data.color, obj.data.energy = color, energy  # Eevee
+        obj.location = location
+        if size:
+            obj.scale = (size, size, size)
         return obj
 
-    # Cold pre-dawn sky from the east, low.
-    sky = light("DawnSky", "SUN", (0, 0, 10), (0.55, 0.68, 1.0), 0.6, angle=math.radians(10))
-    sky.rotation_euler = (math.radians(65), 0, math.radians(100))
+    # Pre-dawn sky: dim blue dome (also the background).
+    light("SkyDome", "PxrDomeLight", "SUN", (0, 0, 0), (0.35, 0.5, 1.0), 0.0, {"intensity": 0.25})
+    # Cold low light from the east.
+    dawn = light("DawnSky", "PxrDistantLight", "SUN", (0, 0, 10), (0.55, 0.68, 1.0), 0.6,
+                 {"intensity": 0.6, "angleExtent": 10.0})
+    dawn.rotation_euler = (math.radians(65), 0, math.radians(100))
     # Warm practical lantern by her stool (placeholder: no lantern model yet).
-    light("LanternWarm", "POINT", (-4.75, -1.45, 1.35), (1.0, 0.55, 0.25), 40, shadow_soft_size=0.06)
+    light("LanternWarm", "PxrSphereLight", "POINT", (-4.75, -1.45, 1.35), (1.0, 0.55, 0.25), 40,
+          {"intensity": 1.0, "exposure": 6.0}, size=0.06)
     # Faint warm glow from the paper lantern on the south-west post.
-    light("PostLantern", "POINT", (-5.5, -5.5, 4.2), (1.0, 0.6, 0.3), 60, shadow_soft_size=0.15)
+    light("PostLantern", "PxrSphereLight", "POINT", (-5.5, -5.5, 4.2), (1.0, 0.6, 0.3), 60,
+          {"intensity": 1.0, "exposure": 6.0}, size=0.15)
 
 
 def add_camera(parent_coll):
@@ -238,7 +272,8 @@ def main():
     os.makedirs(os.path.dirname(out), exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)  # also unloads add-ons
     bpy.ops.wm.save_as_mainfile(filepath=out)  # save first so library paths are made relative
-    addon_utils.enable("RenderManForBlender", default_set=False)  # after the empty save: its save hook needs a world
+    if addon_utils.enable("RenderManForBlender", default_set=False):  # after the empty save: its save hook needs a world
+        bpy.context.scene.render.engine = "PRMAN_RENDER"  # before adding RfB nodes and lights
 
     set_coll, char_coll = new_collection("Set"), new_collection("Character")
     props_coll, soul_coll = new_collection("Props"), new_collection("PaperSoul")

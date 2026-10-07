@@ -269,7 +269,7 @@ Do you already have the challenge zip files downloaded and unpacked under a proj
 ------------------------------
 ## Concept: Paper Soul (working title "4:07 a.m.")
 
-Seed: on Aug 9, early morning, I dreamed of myself as a drifting soul, like a piece of paper floating around during a restless sleep.
+Seed: on Aug 9, early morning during a restless sleep, I dreamed of myself as a drifting soul, like a piece of paper floating around.
 
 Folklore hook: the Japanese *ikiryō*, a living person's spirit that leaves the body during sleep.
 

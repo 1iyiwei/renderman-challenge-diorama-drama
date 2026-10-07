@@ -21,14 +21,28 @@ XPU is not available on macOS (RenderMan falls back to RIS), so final XPU render
 With `B=/Applications/Blender-4.5.9-x64.app/Contents/MacOS/Blender`:
 
 ```bash
-# Oni props: import .abc geometry + rebuild materials from the .usda (Blender's USD import shows only an empty)
+# Oni props: import .abc geometry + rebuild materials from the .usda (Blender's USD import shows only an empty);
+# RenderMan networks are recreated node for node, using the pack's .tex files
 $B -b --factory-startup --python tools/import_oni_assets.py -- assets/derived/oni_assets.blend
 
-# Layout draft: links assets from assets/, so the scene file stays small
+# RenderMan-ready copies of the KitBash3D set and the character (adds PxrSurface networks, txmakes textures)
+$B -b assets/KitBash3D/WoodCollector.blend --addons RenderManForBlender \
+    --python tools/convert_to_rman.py -- assets/derived/WoodCollector_rman.blend
+$B -b "assets/BMS_Pixar-Collab_Assets/WaterVillage _6Crowd_Characters/WaterVillage_POSED.blend" --addons RenderManForBlender \
+    --python tools/convert_to_rman.py -- assets/derived/OldWoman_rman.blend --keep 31_OldWoman_Sit6_Reading
+
+# Layout draft: links the assets/derived/ files, so the scene file stays small
 $B -b --factory-startup --python tools/build_layout.py -- scenes/paper_soul_v001.blend
 
 # Preview through the scene camera (eevee = fast; prman = RenderMan); --report prints object positions in frame
 $B -b scenes/paper_soul_v001.blend --python tools/preview_scene.py -- build/preview/layout.png
+$B -b scenes/paper_soul_v001.blend --addons RenderManForBlender --python tools/preview_scene.py -- build/preview/layout_prman.png --engine prman
 ```
+
+Notes:
+
+* RenderMan for Blender ignores image textures in plain Blender materials, and its built-in Cycles converter predates Blender 4's Principled BSDF; hence `convert_to_rman.py`.
+* RenderMan texture paths are absolute for now (RfB resolves `<blend_dir>` against the scene, not a linked library); they need remapping for cloud rendering.
+* A RfB `RecursionError` traceback from its link-file handler while building the layout is harmless.
 
 `tools/preview_set.py` renders a KitBash3D set with the old woman for scale.
