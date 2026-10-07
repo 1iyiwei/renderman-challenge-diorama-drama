@@ -1,6 +1,6 @@
 OpenShadingLanguage 1.00
 # Compiled by oslc 1.13.0.@PROJECT_VERSION_TWEAK@"dev"
-# options: -o shaders/PaperFracture.oso
+# options: -o /Users/lwei/Trees/renderman-challenge/shaders/PaperFracture.oso
 shader PaperFracture
 param	float	cellSize	0.0450000018		%read{2,58} %write{2147483647,-1}
 param	float	jitter	0.899999976		%read{28,28} %write{2147483647,-1}
@@ -77,126 +77,126 @@ const	float	$const14	0.25		%read{61,61} %write{2147483647,-1}
 temp	float	$tmp32	%read{64,64} %write{63,63}
 temp	float	$tmp33	%read{65,65} %write{64,64}
 code ___main___
-# shaders/PaperFracture.osl:28
-#     point Po = transform("object", P) / cellSize;
-	functioncall	$const2 2 	%filename{"shaders/PaperFracture.osl"} %line{28} %argrw{"r"}
+# shaders/PaperFracture.osl:29
+#     point cell = floor(Po);
+	functioncall	$const2 2 	%filename{"shaders/PaperFracture.osl"} %line{29} %argrw{"r"}
 # /Applications/Pixar/RenderManProServer-27.3/lib/osl/include/stdosl.h:263
 # point  transform (string to, point p)  { return transform("common",to,p); }
 	transform	$tmp1 $const3 $const1 P 	%filename{"/Applications/Pixar/RenderManProServer-27.3/lib/osl/include/stdosl.h"} %line{263} %argrw{"wrrr"}
-# shaders/PaperFracture.osl:28
-#     point Po = transform("object", P) / cellSize;
-	div		Po $tmp1 cellSize 	%filename{"shaders/PaperFracture.osl"} %line{28} %argrw{"wrr"}
 # shaders/PaperFracture.osl:29
 #     point cell = floor(Po);
-	floor		cell Po 	%line{29} %argrw{"wr"}
+	div		Po $tmp1 cellSize 	%filename{"shaders/PaperFracture.osl"} %line{29} %argrw{"wrr"}
 # shaders/PaperFracture.osl:30
 #     float d1 = 1e9, d2 = 1e9;
-	assign		d1 $const4 	%line{30} %argrw{"wr"}
-	assign		d2 $const4 	%argrw{"wr"}
+	floor		cell Po 	%line{30} %argrw{"wr"}
 # shaders/PaperFracture.osl:31
 #     point f1 = point(0);
-	assign		f1 $const5 	%line{31} %argrw{"wr"}
+	assign		d1 $const4 	%line{31} %argrw{"wr"}
+	assign		d2 $const4 	%argrw{"wr"}
 # shaders/PaperFracture.osl:32
 #     for (int i = -1; i <= 1; i++)
-	for		$tmp3 9 11 43 45 	%line{32} %argrw{"r"}
+	assign		f1 $const5 	%line{32} %argrw{"wr"}
+# shaders/PaperFracture.osl:33
+#         for (int j = -1; j <= 1; j++)
+	for		$tmp3 9 11 43 45 	%line{33} %argrw{"r"}
 	assign		___345_i $const6 	%argrw{"wr"}
 	le		$tmp2 ___345_i $const7 	%argrw{"wrr"}
 	neq		$tmp3 $tmp2 $const8 	%argrw{"wrr"}
-# shaders/PaperFracture.osl:33
-#         for (int j = -1; j <= 1; j++)
-	for		$tmp5 13 15 41 43 	%line{33} %argrw{"r"}
+# shaders/PaperFracture.osl:34
+#             for (int k = -1; k <= 1; k++) {
+	for		$tmp5 13 15 41 43 	%line{34} %argrw{"r"}
 	assign		___346_j $const6 	%argrw{"wr"}
 	le		$tmp4 ___346_j $const7 	%argrw{"wrr"}
 	neq		$tmp5 $tmp4 $const8 	%argrw{"wrr"}
-# shaders/PaperFracture.osl:34
-#             for (int k = -1; k <= 1; k++) {
-	for		$tmp7 17 19 39 41 	%line{34} %argrw{"r"}
+# shaders/PaperFracture.osl:35
+#                 point cc = cell + vector(i, j, k);
+	for		$tmp7 17 19 39 41 	%line{35} %argrw{"r"}
 	assign		___347_k $const6 	%argrw{"wr"}
 	le		$tmp6 ___347_k $const7 	%argrw{"wrr"}
 	neq		$tmp7 $tmp6 $const8 	%argrw{"wrr"}
-# shaders/PaperFracture.osl:35
-#                 point cc = cell + vector(i, j, k);
-	assign		$tmp9 ___345_i 	%line{35} %argrw{"wr"}
+# shaders/PaperFracture.osl:36
+#                 vector rnd = cellnoise(cc, (float)seed);
+	assign		$tmp9 ___345_i 	%line{36} %argrw{"wr"}
 	assign		$tmp10 ___346_j 	%argrw{"wr"}
 	assign		$tmp11 ___347_k 	%argrw{"wr"}
 	vector		$tmp8 $tmp9 $tmp10 $tmp11 	%argrw{"wrrr"}
 	add		___348_cc cell $tmp8 	%argrw{"wrr"}
-# shaders/PaperFracture.osl:36
-#                 vector rnd = cellnoise(cc, (float)seed);
-	assign		$tmp12 seed 	%line{36} %argrw{"wr"}
-	cellnoise	___348_rnd ___348_cc $tmp12 	%argrw{"wrr"}
 # shaders/PaperFracture.osl:37
 #                 point fp = cc + 0.5 + jitter * (rnd - 0.5);
-	add		$tmp13 ___348_cc $const9 	%line{37} %argrw{"wrr"}
+	assign		$tmp12 seed 	%line{37} %argrw{"wr"}
+	cellnoise	___348_rnd ___348_cc $tmp12 	%argrw{"wrr"}
+# shaders/PaperFracture.osl:38
+#                 float d = distance(Po, fp);
+	add		$tmp13 ___348_cc $const9 	%line{38} %argrw{"wrr"}
 	sub		$tmp14 ___348_rnd $const9 	%argrw{"wrr"}
 	mul		$tmp15 jitter $tmp14 	%argrw{"wrr"}
 	add		___348_fp $tmp13 $tmp15 	%argrw{"wrr"}
-# shaders/PaperFracture.osl:38
-#                 float d = distance(Po, fp);
-	distance	___348_d Po ___348_fp 	%line{38} %argrw{"wrr"}
 # shaders/PaperFracture.osl:39
 #                 if (d < d1) {
-	lt		$tmp16 ___348_d d1 	%line{39} %argrw{"wrr"}
-	if		$tmp16 36 39 	%argrw{"r"}
+	distance	___348_d Po ___348_fp 	%line{39} %argrw{"wrr"}
 # shaders/PaperFracture.osl:40
 #                     d2 = d1;
-	assign		d2 d1 	%line{40} %argrw{"wr"}
+	lt		$tmp16 ___348_d d1 	%line{40} %argrw{"wrr"}
+	if		$tmp16 36 39 	%argrw{"r"}
 # shaders/PaperFracture.osl:41
 #                     d1 = d;
-	assign		d1 ___348_d 	%line{41} %argrw{"wr"}
+	assign		d2 d1 	%line{41} %argrw{"wr"}
 # shaders/PaperFracture.osl:42
 #                     f1 = fp;
-	assign		f1 ___348_fp 	%line{42} %argrw{"wr"}
+	assign		d1 ___348_d 	%line{42} %argrw{"wr"}
 # shaders/PaperFracture.osl:43
 #                 } else if (d < d2) {
-	lt		$tmp17 ___348_d d2 	%line{43} %argrw{"wrr"}
-	if		$tmp17 39 39 	%argrw{"r"}
+	assign		f1 ___348_fp 	%line{43} %argrw{"wr"}
 # shaders/PaperFracture.osl:44
 #                     d2 = d;
-	assign		d2 ___348_d 	%line{44} %argrw{"wr"}
+	lt		$tmp17 ___348_d d2 	%line{44} %argrw{"wrr"}
+	if		$tmp17 39 39 	%argrw{"r"}
+# shaders/PaperFracture.osl:45
+#                 }
+	assign		d2 ___348_d 	%line{45} %argrw{"wr"}
+# shaders/PaperFracture.osl:35
+#                 point cc = cell + vector(i, j, k);
+	assign		$tmp18 ___347_k 	%line{35} %argrw{"wr"}
+	add		___347_k ___347_k $const7 	%argrw{"wrr"}
 # shaders/PaperFracture.osl:34
 #             for (int k = -1; k <= 1; k++) {
-	assign		$tmp18 ___347_k 	%line{34} %argrw{"wr"}
-	add		___347_k ___347_k $const7 	%argrw{"wrr"}
+	assign		$tmp19 ___346_j 	%line{34} %argrw{"wr"}
+	add		___346_j ___346_j $const7 	%argrw{"wrr"}
 # shaders/PaperFracture.osl:33
 #         for (int j = -1; j <= 1; j++)
-	assign		$tmp19 ___346_j 	%line{33} %argrw{"wr"}
-	add		___346_j ___346_j $const7 	%argrw{"wrr"}
-# shaders/PaperFracture.osl:32
-#     for (int i = -1; i <= 1; i++)
-	assign		$tmp20 ___345_i 	%line{32} %argrw{"wr"}
+	assign		$tmp20 ___345_i 	%line{33} %argrw{"wr"}
 	add		___345_i ___345_i $const7 	%argrw{"wrr"}
-# shaders/PaperFracture.osl:48
-#     float t = smoothstep(startHeight, endHeight, f1[2] * cellSize);
-	compref		$tmp21 f1 $const10 	%line{48} %argrw{"wrr"}
-	mul		$tmp22 $tmp21 cellSize 	%argrw{"wrr"}
-	smoothstep	t startHeight endHeight $tmp22 	%argrw{"wrrr"}
 # shaders/PaperFracture.osl:49
 #     float r = cellnoise(f1, (float)seed + 101.0);
-	assign		$tmp23 seed 	%line{49} %argrw{"wr"}
-	add		$tmp24 $tmp23 $const11 	%argrw{"wrr"}
-	cellnoise	r f1 $tmp24 	%argrw{"wrr"}
+	compref		$tmp21 f1 $const10 	%line{49} %argrw{"wrr"}
+	mul		$tmp22 $tmp21 cellSize 	%argrw{"wrr"}
+	smoothstep	t startHeight endHeight $tmp22 	%argrw{"wrrr"}
 # shaders/PaperFracture.osl:50
 #     presence = (r < t * maxRemove) ? 0.0 : 1.0;
-	mul		$tmp25 t maxRemove 	%line{50} %argrw{"wrr"}
+	assign		$tmp23 seed 	%line{50} %argrw{"wr"}
+	add		$tmp24 $tmp23 $const11 	%argrw{"wrr"}
+	cellnoise	r f1 $tmp24 	%argrw{"wrr"}
+# shaders/PaperFracture.osl:51
+# 
+	mul		$tmp25 t maxRemove 	%line{51} %argrw{"wrr"}
 	lt		$tmp26 r $tmp25 	%argrw{"wrr"}
 	if		$tmp26 55 56 	%argrw{"r"}
 	assign		presence $const12 	%argrw{"wr"}
 	assign		presence $const13 	%argrw{"wr"}
-# shaders/PaperFracture.osl:53
-#     float border = 0.5 * (d2 - d1) * cellSize;
-	sub		$tmp27 d2 d1 	%line{53} %argrw{"wrr"}
-	mul		$tmp28 $const9 $tmp27 	%argrw{"wrr"}
-	mul		border $tmp28 cellSize 	%argrw{"wrr"}
 # shaders/PaperFracture.osl:54
 #     crack = (1.0 - smoothstep(0.0, crackWidth, border)) * smoothstep(0.0, 0.25, t);
-	smoothstep	$tmp29 $const12 crackWidth border 	%line{54} %argrw{"wrrr"}
+	sub		$tmp27 d2 d1 	%line{54} %argrw{"wrr"}
+	mul		$tmp28 $const9 $tmp27 	%argrw{"wrr"}
+	mul		border $tmp28 cellSize 	%argrw{"wrr"}
+# shaders/PaperFracture.osl:55
+#     shade = color(1.0 - crackDarkness * crack);
+	smoothstep	$tmp29 $const12 crackWidth border 	%line{55} %argrw{"wrrr"}
 	sub		$tmp30 $const13 $tmp29 	%argrw{"wrr"}
 	smoothstep	$tmp31 $const12 $const14 t 	%argrw{"wrrr"}
 	mul		crack $tmp30 $tmp31 	%argrw{"wrr"}
-# shaders/PaperFracture.osl:55
-#     shade = color(1.0 - crackDarkness * crack);
-	mul		$tmp32 crackDarkness crack 	%line{55} %argrw{"wrr"}
+# shaders/PaperFracture.osl:56
+# }
+	mul		$tmp32 crackDarkness crack 	%line{56} %argrw{"wrr"}
 	sub		$tmp33 $const13 $tmp32 	%argrw{"wrr"}
 	assign		shade $tmp33 	%argrw{"wr"}
 	end

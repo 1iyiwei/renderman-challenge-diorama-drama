@@ -11,7 +11,7 @@ from the mesh, ignoring object-level material slot overrides.
 Usage (Blender 4.5 Intel with RenderMan for Blender):
   Blender -b assets/derived/OldWoman_rman.blend --addons RenderManForBlender \
       --python tools/fracture_newspaper.py -- assets/derived/OldWoman_fractured_rman.blend \
-      [--no-presence] [--param name=value ...]   (e.g. --param cellSize=0.03 crackDarkness=0.5)
+      [--no-presence] [--param name=value ...]   (e.g. --param cellSize=0.03 crackDarkness=0.5 glowGain=0.5 newspaperScale=1.2)
 """
 
 import os
@@ -19,14 +19,20 @@ import subprocess
 import sys
 
 import bpy
+from mathutils import Vector
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RMANTREE = os.environ.get("RMANTREE", "/Applications/Pixar/RenderManProServer-27.3")
 FRACTURE_OSL = os.path.join(REPO, "shaders", "PaperFracture.osl")
 CHAR_NAME = "31_OldWoman_Sit6_Reading"
 NEWSPAPER_MATERIAL = "M_Papers"
-FRACTURE_START = 0.45  # fraction of the sheet's height where fracturing begins
-FRACTURE_PARAMS = {"cellSize": 0.045, "jitter": 0.9, "maxRemove": 0.97,
+# Exaggerated (dream logic) so the fracture reads at full-diorama framing.
+NEWSPAPER_SCALE = 1.4
+FRACTURE_START = 0.25  # fraction of the sheet's height where fracturing begins
+# Glow matching the first paper scraps (GLOW_WARM / GLOW_GAIN[0] in build_layout.py).
+GLOW_COLOR = (1.0, 0.75, 0.45)
+GLOW_GAIN = 0.35
+FRACTURE_PARAMS = {"cellSize": 0.07, "jitter": 0.9, "maxRemove": 0.97,
                    "crackWidth": 0.004, "crackDarkness": 0.65, "seed": 809}
 
 from RenderManForBlender.rman_bl_nodes import __BL_NODES_MAP__ as NODES  # noqa: E402
@@ -52,7 +58,14 @@ def main():
     char = bpy.data.objects[CHAR_NAME]
     mesh = char.data
     slot = next(i for i, m in enumerate(mesh.materials) if m and m.name.startswith(NEWSPAPER_MATERIAL))
-    zs = [mesh.vertices[v].co.z for p in mesh.polygons if p.material_index == slot for v in p.vertices]
+    paper = sorted({v for p in mesh.polygons if p.material_index == slot for v in p.vertices})
+    # Enlarge the newspaper about its bottom center (it shares no vertices with her hands/body).
+    scale = overrides.pop("newspaperScale", NEWSPAPER_SCALE)
+    cos = [mesh.vertices[v].co.copy() for v in paper]
+    pivot = Vector((sum(c.x for c in cos) / len(cos), sum(c.y for c in cos) / len(cos), min(c.z for c in cos)))
+    for v, co in zip(paper, cos):
+        mesh.vertices[v].co = pivot + (co - pivot) * scale
+    zs = [mesh.vertices[v].co.z for v in paper]
     bottom, top = min(zs), max(zs)
 
     nt = mesh.materials[slot].node_tree
@@ -71,6 +84,7 @@ def main():
     # At render time <blend_dir> is the scene's folder (scenes/), even for linked libraries.
     osl.shadercode = "<blend_dir>/../" + os.path.relpath(oso, REPO)
     params = dict(FRACTURE_PARAMS, startHeight=bottom + FRACTURE_START * (top - bottom), endHeight=top)
+    glow_gain = overrides.pop("glowGain", GLOW_GAIN)  # not a shader parameter
     params.update(overrides)
     for name, value in params.items():
         osl.inputs[name].default_value = value
@@ -82,6 +96,16 @@ def main():
     nt.links.new(print_color, blend.inputs["topRGB"])
     nt.links.new(osl.outputs["shade"], blend.inputs["bottomRGB"])
     nt.links.new(blend.outputs["resultRGB"], metal.inputs["baseColor"])
+
+    # Self-illuminated like the paper scraps at the start of the trail (warm, dim): print x tint.
+    glow = nt.nodes.new(NODES["PxrBlend"])
+    glow.location = (blend.location.x, blend.location.y + 200)
+    glow.operation = "18"  # Multiply
+    glow.bottomRGB = GLOW_COLOR
+    nt.links.new(blend.outputs["resultRGB"], glow.inputs["topRGB"])
+    surf.enableGlow = True
+    surf.glowGain = glow_gain
+    nt.links.new(glow.outputs["resultRGB"], surf.inputs["glowColor"])
     if "--no-presence" not in argv:
         nt.links.new(osl.outputs["presence"], surf.inputs["presence"])
 

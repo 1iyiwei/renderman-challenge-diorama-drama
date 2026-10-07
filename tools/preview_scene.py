@@ -3,11 +3,13 @@
 Usage:
   Blender -b scenes/<scene>.blend [--addons RenderManForBlender] \
       --python tools/preview_scene.py -- <out.png> [--engine eevee|prman] [--percent N] [--report] \
-      [--focus x,y,z --ortho SIZE]
+      [--focus x,y,z --ortho SIZE] [--lens r1,r2,cx,cy]
 
 eevee (default) is a fast layout check; prman renders with RenderMan
 (RIS on macOS) to check that materials and lights translate.
 --report prints where key objects land in the frame instead of rendering.
+--lens (experiment, prman only) swaps the orthographic camera for a long lens with PxrCamera
+radial distortion r1, r2 centered at (cx, cy).
 """
 
 import os
@@ -34,6 +36,26 @@ if "--focus" in argv:  # zoom the scene camera onto a point: --focus x,y,z --ort
     forward = cam.matrix_world.to_3x3() @ Vector((0, 0, -1))
     cam.location = target - forward * 40
     cam.data.ortho_scale = float(argv[argv.index("--ortho") + 1]) if "--ortho" in argv else 2.0
+if "--lens" in argv:  # experiment: in-camera barrel distortion (RenderMan PxrCamera), --lens r1,r2,cx,cy
+    from mathutils import Vector
+    from RenderManForBlender.rman_bl_nodes import __BL_NODES_MAP__ as nodes
+    r1, r2, cx, cy = [float(v) for v in argv[argv.index("--lens") + 1].split(",")]
+    cam = scene.camera
+    # Swap the orthographic camera for a long lens framing the same area (near-isometric look).
+    forward = cam.matrix_world.to_3x3() @ Vector((0, 0, -1))
+    center = cam.location + forward * 40
+    width, focal = cam.data.ortho_scale, 300.0
+    cam.data.type, cam.data.lens = "PERSP", focal
+    cam.data.sensor_fit, cam.data.sensor_width = "HORIZONTAL", 36.0
+    distance = width * focal / 36.0
+    cam.location = center - forward * distance
+    cam.data.clip_start, cam.data.clip_end = distance - 30, distance + 30
+    nt = bpy.data.node_groups.new("Projection", "ShaderNodeTree")
+    output = nt.nodes.new("RendermanProjectionsOutputNode")
+    proj = nt.nodes.new(nodes["PxrCamera"])
+    nt.links.new(proj.outputs[0], output.inputs[0])
+    proj.radial1, proj.radial2, proj.distortionCtr = r1, r2, (cx, cy)
+    cam.data.renderman.rman_nodetree = nt
 scene.render.image_settings.file_format = "PNG"
 scene.render.filepath = out
 if "--report" in argv:

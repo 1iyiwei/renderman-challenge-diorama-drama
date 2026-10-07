@@ -56,7 +56,7 @@ CRANE_POS = TRAIL_POINTS[-1]
 TRAIL_COUNT = 44
 TRAIL_SEED = 809  # Aug 9
 # Exaggerated for readability at full-diorama framing (dream logic, not newspaper scale).
-SCRAP_SIZE = (0.05, 0.26)  # at the newspaper (fracture-cell size) -> near the crane
+SCRAP_SIZE = (0.07, 0.26)  # at the newspaper (fracture-cell size) -> near the crane
 TRAIL_SPREAD = 0.5
 # Glow: warm (lantern-lit newspaper) near her, cool spirit-blue toward the crane.
 GLOW_WARM, GLOW_COOL = (1.0, 0.75, 0.45), (0.7, 0.85, 1.0)
