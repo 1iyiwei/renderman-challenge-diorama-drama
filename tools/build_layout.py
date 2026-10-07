@@ -39,30 +39,43 @@ CHAR_POS = Vector((-5.1, -2.4, VERANDA_Z))
 CHAR_ROT_Z = math.radians(-90)
 
 # Oni props: (collection, location of bottom-center pivot, rotation XYZ degrees, scale)
+# Spread along the west veranda (the lit "stage" facing the camera), slightly enlarged.
 PROPS = [
-    ("clock",              (-3.9, -3.00, 1.45),        (0, 0, 0),   1.0),  # on the south wall
-    ("kakuremino",         (-3.0, -3.34, 0.75),        (0, 0, 0),   1.0),  # hanging, empty
-    ("setsubun_bagClosed", (-4.75, -1.75, VERANDA_Z),  (0, 0, 20),  2.5),  # still tied shut
-    ("cutleryKnife",       (-5.6, -3.2, VERANDA_Z + 0.027), (90, 0, 75), 1.0),  # beside the string
+    ("clock",              (-4.42, -2.6, 1.45),        (0, 0, -90), 1.3),  # west wall, behind her
+    ("kakuremino",         (-4.75, 0.7, 0.75),         (0, 0, -90), 1.0),  # west wall north of the doors, empty
+    ("setsubun_bagClosed", (-5.45, -1.75, VERANDA_Z),  (0, 0, 20),  3.0),  # by her feet, still tied shut
+    ("cutleryKnife",       (-5.55, -3.15, VERANDA_Z + 0.035), (90, 0, 75), 1.3),  # beside the string
 ]
 
-# Paper trail: from the newspaper, out from under the eave, then rising in front of the
-# dark thatched roof (seen from the west-south-west), the crane high against the roof.
-TRAIL_START = Vector((-5.75, -2.4, 1.75))
-TRAIL_CTRL = Vector((-7.6, -2.9, 2.4))
-CRANE_POS = Vector((-7.9, -1.6, 4.6))
-TRAIL_COUNT = 32
+# Paper trail: from the newspaper out from under the eave, then a wide S-curve rising in front
+# of the dark thatched roof to the crane above the ridge (screen: right, far left, right, left).
+TRAIL_POINTS = [Vector(p) for p in [(-5.75, -2.4, 1.75), (-7.6, -2.7, 2.5), (-7.4, 0.2, 4.0),
+                                    (-5.6, -1.8, 5.8), (-3.4, 0.3, 8.4)]]
+CRANE_POS = TRAIL_POINTS[-1]
+TRAIL_COUNT = 44
 TRAIL_SEED = 809  # Aug 9
 # Exaggerated for readability at full-diorama framing (dream logic, not newspaper scale).
 SCRAP_SIZE = (0.16, 0.28)
 TRAIL_SPREAD = 0.5
+# Glow: warm (lantern-lit newspaper) near her, cool spirit-blue toward the crane.
+GLOW_WARM, GLOW_COOL = (1.0, 0.75, 0.45), (0.7, 0.85, 1.0)
+GLOW_GAIN = (0.35, 0.8)
+GLOW_BINS = 6
+# The scraps and crane are cut from her newspaper: same texture (from the converted character).
+NEWSPAPER_IMAGE = os.path.join(ASSETS, "derived", "tex", "OldWoman_rman", "src", "Papers_color.jpg")
+NEWSPAPER_TEX = os.path.join(ASSETS, "derived", "tex", "OldWoman_rman", "Papers_color.jpg.tex")
+# Printed panels of the newspaper texture atlas, in UV space (u0, v0, u1, v1).
+PRINT_REGIONS = [(0.53, 0.52, 0.87, 0.99), (0.15, 0.03, 0.49, 0.48), (0.51, 0.03, 0.87, 0.48)]
+SCRAP_UV_SIZE = (0.08, 0.16)
 
 # String: tied to the stool leg, along the floor past the knife, over the edge, up to the crane.
 STRING_POINTS = [(-4.85, -2.75, VERANDA_Z + 0.03), (-5.5, -2.95, VERANDA_Z + 0.004),
-                 (-5.85, -2.9, VERANDA_Z + 0.004), (-7.4, -3.2, 2.2), tuple(CRANE_POS)]
+                 (-5.85, -2.9, VERANDA_Z + 0.004), (-6.6, -2.6, 2.2), tuple(CRANE_POS)]
 
-# Floor lantern in front of her (west, toward the camera side): the warm pool she sits in.
-LANTERN_POS = Vector((-5.5, -1.8, VERANDA_Z))
+# Reading lantern hanging from the eave, above her and just in front (center of the lantern),
+# high enough to clear her hat from the camera.
+LANTERN_POS = Vector((-5.45, -2.6, 2.85))
+LANTERN_CORD_TOP = 4.3  # just under the roof
 CRANE_SCALE = 3.0
 
 # Looking from the west-south-west (Li-Yi's v002 camera azimuth), 22 degrees down:
@@ -141,19 +154,56 @@ def rman_surface(mat, **params):
     nt.links.new(surf.outputs["bxdf_out"], output.inputs["bxdf_in"])
 
 
-def paper_material():
-    mat = bpy.data.materials.new("PaperScrap")
+def paper_material(name, glow_color, glow_gain):
+    """Newspaper-printed thin paper that glows: glow = print x tint, so the print stays readable."""
+    mat = bpy.data.materials.new(name)
     mat.use_nodes = True
-    bsdf = mat.node_tree.nodes["Principled BSDF"]
-    bsdf.inputs["Base Color"].default_value = (0.82, 0.76, 0.62, 1)
+    nt = mat.node_tree
+    bsdf = nt.nodes["Principled BSDF"]
+    image = nt.nodes.new("ShaderNodeTexImage")  # Eevee preview
+    image.image = bpy.data.images.load(NEWSPAPER_IMAGE, check_existing=True)
+    image.image.filepath = bpy.path.relpath(NEWSPAPER_IMAGE)  # relative to the scene file
+    tint = nt.nodes.new("ShaderNodeMix")
+    tint.data_type, tint.blend_type = "RGBA", "MULTIPLY"
+    tint.inputs["Factor"].default_value = 1.0
+    tint.inputs["B"].default_value = (*glow_color, 1)
+    nt.links.new(image.outputs["Color"], bsdf.inputs["Base Color"])
+    nt.links.new(image.outputs["Color"], tint.inputs["A"])
+    nt.links.new(tint.outputs["Result"], bsdf.inputs["Emission Color"])
     bsdf.inputs["Roughness"].default_value = 0.8
-    bsdf.inputs["Subsurface Weight"].default_value = 0.3  # thin paper glows when backlit
-    bsdf.inputs["Subsurface Radius"].default_value = (0.02, 0.015, 0.01)
+    bsdf.inputs["Emission Strength"].default_value = glow_gain
     mat.use_backface_culling = False
-    rman_surface(mat, diffuseColor=(0.82, 0.76, 0.62), diffuseDoubleSided=1,
-                 diffuseTransmitGain=0.45, diffuseTransmitColor=(1.0, 0.85, 0.6),  # thin paper, backlit glow
-                 enableGlow=True, glowColor=(0.75, 0.85, 1.0), glowGain=0.08)  # faint spirit glow
+
+    if bpy.context.scene.render.engine == "PRMAN_RENDER":
+        from RenderManForBlender.rman_bl_nodes import __BL_NODES_MAP__ as nodes
+        output = nt.nodes.new("RendermanOutputNode")
+        surf = nt.nodes.new(nodes["PxrSurface"])
+        tex = nt.nodes.new(nodes["PxrTexture"])
+        tex.filename, tex.linearize = "<blend_dir>/../" + os.path.relpath(NEWSPAPER_TEX, REPO), 1
+        blend = nt.nodes.new(nodes["PxrBlend"])
+        blend.operation = "18"  # Multiply
+        blend.bottomRGB = glow_color
+        surf.diffuseDoubleSided = 1
+        surf.diffuseTransmitGain = 0.45  # thin paper, backlit glow
+        surf.diffuseTransmitColor = (1.0, 0.85, 0.6)
+        surf.enableGlow = True
+        surf.glowGain = glow_gain
+        nt.links.new(tex.outputs["resultRGB"], surf.inputs["diffuseColor"])
+        nt.links.new(tex.outputs["resultRGB"], blend.inputs["topRGB"])
+        nt.links.new(blend.outputs["resultRGB"], surf.inputs["glowColor"])
+        nt.links.new(surf.outputs["bxdf_out"], output.inputs["bxdf_in"])
     return mat
+
+
+def glow_materials():
+    """GLOW_BINS paper materials from warm/dim (t=0, near her) to cool/bright (t=1, crane)."""
+    mats = []
+    for b in range(GLOW_BINS):
+        t = b / (GLOW_BINS - 1)
+        color = tuple(w + (c - w) * t for w, c in zip(GLOW_WARM, GLOW_COOL))
+        gain = GLOW_GAIN[0] + (GLOW_GAIN[1] - GLOW_GAIN[0]) * t
+        mats.append(paper_material(f"PaperSoul_{b}", color, gain))
+    return mats
 
 
 def scrap_mesh(name, size, fold, rng):
@@ -168,36 +218,71 @@ def scrap_mesh(name, size, fold, rng):
     center = sum(corners, Vector()) / 4
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata([c - center for c in corners], [], [(0, 1, 2), (0, 2, 3)])
+    # UVs: a random patch of one printed panel, so each scrap shows a different bit of the newspaper.
+    u0, v0, u1, v1 = rng.choice(PRINT_REGIONS)
+    uv_size = rng.uniform(*SCRAP_UV_SIZE)
+    u, v = rng.uniform(u0, u1 - uv_size), rng.uniform(v0, v1 - uv_size)
+    flat = [(0, 0), (1, 0), (1, 1), (0, 1)]  # corner order of the quad before folding
+    uv_layer = mesh.uv_layers.new(name="UVMap")
+    for loop in mesh.loops:
+        fu, fv = flat[loop.vertex_index]
+        uv_layer.data[loop.index].uv = (u + fu * uv_size, v + fv * uv_size)
     return mesh
 
 
-def bezier(p0, p1, p2, t):
-    return (1 - t) ** 2 * p0 + 2 * (1 - t) * t * p1 + t ** 2 * p2
+def catmull_rom(points, samples=400):
+    """Dense samples of a Catmull-Rom spline through points, with cumulative arc length."""
+    pts = [points[0]] + list(points) + [points[-1]]
+    dense = []
+    for i in range(1, len(pts) - 2):
+        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[i + 1], pts[i + 2]
+        for k in range(samples // (len(points) - 1)):
+            u = k / (samples // (len(points) - 1))
+            dense.append(0.5 * (2 * p1 + (p2 - p0) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u
+                                + (3 * p1 - p0 - 3 * p2 + p3) * u ** 3))
+    dense.append(points[-1])
+    lengths = [0.0]
+    for a, b in zip(dense, dense[1:]):
+        lengths.append(lengths[-1] + (b - a).length)
+    return dense, lengths
+
+
+def path_at(dense, lengths, t):
+    """Point at fraction t of the arc length."""
+    target = t * lengths[-1]
+    i = next((k for k, L in enumerate(lengths) if L >= target), len(lengths) - 1)
+    if i == 0:
+        return dense[0]
+    f = (target - lengths[i - 1]) / max(lengths[i] - lengths[i - 1], 1e-9)
+    return dense[i - 1].lerp(dense[i], f)
 
 
 def add_paper_trail(parent_coll, oni_crane):
     rng = random.Random(TRAIL_SEED)
-    mat = paper_material()
+    mats = glow_materials()
+    dense, lengths = catmull_rom(TRAIL_POINTS)
     for i in range(TRAIL_COUNT):
         # Stratified jitter along the path: one scrap per stratum, so spacing is even but not regular.
-        t = (i + rng.uniform(0.15, 0.85)) / TRAIL_COUNT * 0.92
-        pos = bezier(TRAIL_START, TRAIL_CTRL, CRANE_POS, t)
+        t = (i + rng.uniform(0.15, 0.85)) / TRAIL_COUNT * 0.95
+        pos = path_at(dense, lengths, t)
         spread = TRAIL_SPREAD * math.sin(math.pi * t)  # loose in the middle, gathered at both ends
         pos += Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.5, 0.5))) * spread
         mesh = scrap_mesh(f"PaperScrap_{i:02d}", rng.uniform(*SCRAP_SIZE), t, rng)
-        mesh.materials.append(mat)
+        mesh.materials.append(mats[min(int(t * GLOW_BINS), GLOW_BINS - 1)])
         obj = bpy.data.objects.new(mesh.name, mesh)
         obj.location = pos
         obj.rotation_euler = [rng.uniform(0, 2 * math.pi) for _ in range(3)]
         parent_coll.objects.link(obj)
     crane = instance(oni_crane, "Crane", parent_coll, CRANE_POS, (0, 0, -135), CRANE_SCALE)
+    if hasattr(crane, "renderman"):  # the soul: override the linked crane's paper with a glowing one
+        crane.renderman.rman_material_override = paper_material("SoulCrane", GLOW_COOL, 1.2)
     return crane
 
 
 def add_string(parent_coll):
     curve = bpy.data.curves.new("SoulString", "CURVE")
     curve.dimensions = "3D"
-    curve.bevel_depth = 0.003
+    curve.bevel_depth = 0.006
     spline = curve.splines.new("NURBS")
     spline.points.add(len(STRING_POINTS) - 1)
     for p, co in zip(spline.points, STRING_POINTS):
@@ -207,7 +292,8 @@ def add_string(parent_coll):
     mat = bpy.data.materials.new("String")
     mat.use_nodes = True
     mat.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.5, 0.05, 0.04, 1)
-    rman_surface(mat, diffuseColor=(0.5, 0.05, 0.04))
+    rman_surface(mat, diffuseColor=(0.5, 0.05, 0.04), enableGlow=True,
+                 glowColor=(0.9, 0.12, 0.08), glowGain=0.25)  # red thread, faintly visible at night
     curve.materials.append(mat)
     obj = bpy.data.objects.new("SoulString", curve)
     parent_coll.objects.link(obj)
@@ -251,8 +337,8 @@ def add_lights(parent_coll):
     dawn = light("DawnSky", "PxrDistantLight", "SUN", (0, 0, 10), (0.45, 0.6, 1.0), 0.4,
                  {"intensity": 0.35, "angleExtent": 10.0})
     dawn.rotation_euler = (math.radians(65), 0, math.radians(100))
-    # Warm floor lantern in front of her (light inside the lantern model).
-    light("LanternWarm", "PxrSphereLight", "POINT", LANTERN_POS + Vector((0, 0, 0.26)), (1.0, 0.55, 0.25), 60,
+    # Warm reading lantern hanging in front of and above her (light inside the lantern model).
+    light("LanternWarm", "PxrSphereLight", "POINT", LANTERN_POS, (1.0, 0.55, 0.25), 60,
           {"intensity": 1.0, "exposure": 9.0}, size=0.07)
     # Faint warm glow from the paper lantern on the south-west post.
     light("PostLantern", "PxrSphereLight", "POINT", (-5.5, -5.5, 4.2), (1.0, 0.6, 0.3), 60,
@@ -263,11 +349,10 @@ def add_lights(parent_coll):
 
 
 def add_lantern(parent_coll):
-    """Placeholder floor lantern: a glowing paper cylinder around the LanternWarm light."""
-    bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=0.11, depth=0.32,
-                                        location=LANTERN_POS + Vector((0, 0, 0.16)))
+    """Placeholder hanging paper lantern around the LanternWarm light, on a cord from the eave."""
+    bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=0.12, depth=0.34, location=LANTERN_POS)
     obj = bpy.context.object
-    obj.name = "FloorLantern"
+    obj.name = "ReadingLantern"
     for coll in list(obj.users_collection):
         coll.objects.unlink(obj)
     parent_coll.objects.link(obj)
@@ -282,6 +367,15 @@ def add_lantern(parent_coll):
     obj.data.materials.append(mat)
     if hasattr(obj, "renderman"):
         obj.renderman.rman_visibilityTransmission = "0"  # let the light inside shine through
+
+    cord = bpy.data.curves.new("LanternCord", "CURVE")
+    cord.dimensions, cord.bevel_depth = "3D", 0.004
+    spline = cord.splines.new("POLY")
+    spline.points.add(1)
+    spline.points[0].co = (*(LANTERN_POS + Vector((0, 0, 0.17))), 1)
+    spline.points[1].co = (LANTERN_POS.x, LANTERN_POS.y, LANTERN_CORD_TOP, 1)
+    cord_obj = bpy.data.objects.new("LanternCord", cord)
+    parent_coll.objects.link(cord_obj)
 
 
 def add_camera(parent_coll, elevation, fit_points=None):

@@ -1,7 +1,7 @@
 """Render a quick isometric 16:9 preview of a KitBash3D set with a character for scale.
 
 Usage (headless, one set per run):
-  Blender -b assets/KitBash3D/<Set>.blend --python tools/preview_set.py -- \
+  Blender -b assets/source/KitBash3D/<Set>.blend --python tools/preview_set.py -- \
       <out.png> [--hide PREFIX ...] [--only PREFIX ...]
 
   --hide PREFIX  hide objects whose names start with PREFIX
@@ -17,7 +17,7 @@ import bpy
 from mathutils import Vector
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CHAR_BLEND = os.path.join(REPO, "assets", "BMS_Pixar-Collab_Assets",
+CHAR_BLEND = os.path.join(REPO, "assets", "source", "BMS_Pixar-Collab_Assets",
                           "WaterVillage _6Crowd_Characters", "WaterVillage_POSED.blend")
 CHAR_NAME = "31_OldWoman_Sit6_Reading"
 

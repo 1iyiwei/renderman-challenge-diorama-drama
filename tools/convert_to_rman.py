@@ -12,7 +12,8 @@ inputs. This adds a RenderMan network next to each material's Blender nodes
     Alpha                    ->    presence
     Emission Color/Strength  ->    glow
   Image Texture              ->  PxrTexture reading a .tex made by txmake
-                                 (saved in <out dir>/tex/<out name>/)
+                                 (saved in <out dir>/tex/<out name>/, referenced as
+                                 <blend_dir>/../assets/... so it resolves from scenes/)
 
 Textures are found through reroutes and simple pass-through nodes (Mix, Color
 Ramp, Normal Map); mix factors and ramps are not reproduced. Materials whose
@@ -45,7 +46,27 @@ TEX_DIR = os.path.join(OUT_DIR, "tex", os.path.splitext(os.path.basename(OUT))[0
 
 from RenderManForBlender.rman_bl_nodes import __BL_NODES_MAP__ as NODES  # noqa: E402
 
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 tx_jobs = {}  # source image path -> .tex path
+
+
+def scene_relative(path):
+    """RenderMan path for a file in this repo, valid from any scene in scenes/.
+
+    RfB expands <blend_dir> to the folder of the *scene* .blend, even for materials in
+    linked libraries, so paths are written relative to scenes/ rather than to this file.
+    """
+    return "<blend_dir>/../" + os.path.relpath(path, REPO)
+
+
+def make_repo_paths_relative():
+    """Blender image paths inside the repo become relative (Blender resolves them per library);
+    paths outside it (e.g. the KitBash3D library in ~/.kitbash3d) stay absolute."""
+    for image in bpy.data.images:
+        path = bpy.path.abspath(image.filepath)
+        if image.source == "FILE" and os.path.abspath(path).startswith(REPO + os.sep):
+            image.filepath = bpy.path.relpath(path, start=OUT_DIR)
 
 
 def follow(socket):
@@ -110,9 +131,7 @@ def tex_file(image):
         return None
     dst = os.path.join(TEX_DIR, os.path.basename(src) + ".tex")
     tx_jobs[src] = dst
-    # Absolute: RfB resolves <blend_dir> against the scene file, not the linked library.
-    # TODO: remap for cloud rendering.
-    return dst
+    return scene_relative(dst)
 
 
 def add_rman_network(mat):
@@ -220,7 +239,9 @@ def main():
     for e in errors:
         print(f"[rman]   txmake failed: {e}")
 
-    bpy.ops.wm.save_as_mainfile(filepath=OUT)
+    bpy.ops.file.make_paths_absolute()  # resolve against the source file first...
+    make_repo_paths_relative()           # ...then relative to OUT for paths inside the repo
+    bpy.ops.wm.save_as_mainfile(filepath=OUT, relative_remap=False)
     print(f"[rman] {converted}/{len(materials)} materials converted, {len(tx_jobs)} textures, saved {OUT}")
 
 

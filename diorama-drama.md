@@ -341,7 +341,7 @@ Open questions:
 
 ### KitBash3D set candidates
 
-Downloaded via Cargo into `assets/KitBash3D/`.
+Downloaded via Cargo into `assets/source/KitBash3D/`.
 Previews with the old woman for scale: `build/preview/sets_contact.png` (from `tools/preview_set.py`).
 
 | Set | Size | Fit for Paper Soul |
@@ -357,3 +357,20 @@ Plan with Wood Collector:
 * She sits on the veranda before dawn, warm lantern light behind her, the paper trail drifting off the edge of the base into the cold sky. No window or cut-away wall needed.
 * Scale: the house dwarfs her (13.5 m vs 1.5 m), and the image must center on her, so frame one corner (veranda, doorway, woodpile) rather than the whole house.
 * Optional: borrow one or two Eclectic Living Room props (the throw blanket, a book) as a quiet out-of-place clue.
+
+### Composition decisions (Oct 6–7)
+
+* Full-diorama framing (the whole ground base), camera from the west-south-west (azimuth 21°), 22° down: a compromise between a side view of her and isometric.
+* The paper soul is exaggerated in scale (dream logic) so it reads at full-diorama framing, and it glows: warm near her, cool spirit-blue toward the crane.
+* Trail: a wide S-curve rising in front of the dark thatched roof, with the crane above the ridge.
+* Reading light: a paper lantern hanging from the eave, in front of and above her.
+* Story props spread along the lit west veranda and slightly enlarged: clock on the wall behind her, empty cape north of the doors, bean bag by her feet, knife beside the red string.
+* Rejected: barrel distortion. As a post-process it is not allowed (compositing is limited to grading, AOV/LPE blending and backgrounds), and in-camera it fights the isometric look. A literal glass dome over the diorama is a possible later experiment.
+
+### Next version: the newspaper fractures into the soul
+
+The newspaper she is reading stays whole at the bottom, cracks more and more toward the top, and its top edge breaks off into the scraps rising above it.
+
+* Shader-based: a Voronoi crack mask on the newspaper's presence (cutout), with cell removal probability rising toward the top edge (by UV v), and darkened crack lines.
+* Scraps are cut from the same newspaper texture (same print), so the trail visibly comes from her paper.
+* Fold progression continues along the trail: torn flat pieces → creased → crane.

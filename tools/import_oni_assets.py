@@ -24,9 +24,8 @@ import bpy
 from mathutils import Vector
 from pxr import Sdf
 
-ROOT = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "assets", "Diorama_Drama_Netflix_Megalis")
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.join(REPO, "assets", "source", "Diorama_Drama_Netflix_Megalis")
 USD_DIR = os.path.join(ROOT, "usd")
 SPACING = 0.6  # gap between assets laid out along X, in meters
 
@@ -178,9 +177,9 @@ def rman_texture_path(usd_file, asset_path):
     if path is None:
         print(f"[oni]   missing texture {asset_path}")
         return ""
-    # Absolute: RfB resolves <blend_dir> against the scene file, not the linked library.
-    # TODO: remap for cloud rendering.
-    return path
+    # RfB expands <blend_dir> to the folder of the *scene* .blend, even for linked libraries,
+    # so the path is relative to scenes/ (a sibling of assets/).
+    return "<blend_dir>/../" + os.path.relpath(path, REPO)
 
 
 # PxrSurface lobes are toggled in RfB; their input sockets only exist once enabled.
@@ -350,7 +349,7 @@ def main():
     for path, data in zip(paths, parsed):
         x += import_asset(path, data, x) + SPACING
     if out:
-        bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(out))
+        bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(out))  # Blender image paths saved relative
 
 
 main()
