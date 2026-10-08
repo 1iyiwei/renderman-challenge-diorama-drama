@@ -57,20 +57,49 @@ On macOS this renders with RIS (XPU is not implemented there), expect hours, and
 the submission needs XPU, i.e. the challenge's cloud rendering (Ranch Computing, CPU-only XPU; their deadline is
 Oct 19 09:00 Paris time) or a Windows/Linux machine.
 
-Cloud render package (for RANCHecker, which uses RenderMan's own scene packer):
+## Cloud rendering (Ranch Computing)
 
-```bash
-$B -b --factory-startup --python tools/build_layout.py -- scenes/paper_soul_v003_render.blend --force --final --local
-```
+The challenge's cloud rendering (Ranch Computing, XPU on CPU) takes a `.vub` archive made by their RANCHecker add-on,
+which uses RenderMan's own scene packer. Their deadline is **Oct 19, 09:00 Paris time**.
 
-`--local` appends everything instead of linking (the packer can't collect our linked libraries in `../assets/derived/`),
-drops Blender's preview images and makes RenderMan paths absolute; the packer then copies the `.tex` files (UDIM tiles
-included) and `shaders/PaperFracture.oso` into the archive. The file is ~320 MB and not in git (`scenes/*_render.blend`).
-In RANCHecker: open this file in Blender 4.5.9 x64, renderer RenderMan, frame 1, and leave **"Use TEX (RenderMan)" off**
-(that mode copies UDIM paths literally and fails). Expect a ~4.4 GB `.vub`. Tested locally: the unpacked package renders
-identically, with no missing textures.
+1. **Build the self-contained render scene** (after any change to the scene or assets):
 
-Notes:
+   ```bash
+   $B -b --factory-startup --python tools/build_layout.py -- scenes/paper_soul_v003_render.blend --force --final --local
+   ```
+
+   `--local` appends everything instead of linking (the packer can't collect our linked libraries in `../assets/derived/`),
+   drops Blender's preview images and makes RenderMan paths absolute; the packer then copies the `.tex` files (UDIM tiles
+   included) and `shaders/PaperFracture.oso` into the archive. The file is ~400 MB and not in git (`scenes/*_render.blend`).
+   It is already set to 3840x2160 at 100%, frame 1, XPU, production sampling.
+
+2. **Install RANCHecker once** (Blender 4.5.9 x64): download *RANCHecker for Blender* from
+   <https://www.ranchcomputing.com/en/ranchsync-ranchecker/>, then Edit > Preferences > Add-ons > ⌄ > Install from Disk
+   (or copy its `RANCHecker` folder into `~/Library/Application Support/Blender/4.5/scripts/addons/`) and enable it.
+   In its add-on preferences, leave **"Use TEX (RenderMan)" off** (that mode copies UDIM paths literally and fails).
+
+3. **Create the `.vub`**: open `scenes/paper_soul_v003_render.blend` in Blender 4.5.9 x64, press **N** in the 3D viewport,
+   open the **RANCHECKER** tab, optionally tick *Destination* to choose the output folder (default: Desktop; needs ~5 GB free),
+   and click **Prepare project**. Its *Logs* show the result; expect a ~4.4 GB `paper_soul_v003_render.vub`.
+   The same can be done headless:
+
+   ```bash
+   $B -b scenes/paper_soul_v003_render.blend --addons RenderManForBlender,RANCHecker --python-expr \
+       "import bpy; s = bpy.context.scene.ranch_settings; s.destination_bool = True; \
+        s.str_destination = '$PWD/build/cloud/'; print(bpy.ops.ranch.create_archive())"
+   ```
+
+4. **Upload** the `.vub` with RanchSync (sign in with your API key) or the project page's web upload, then render.
+   Check the result for magenta (missing textures) and that the newspaper is fractured (OSL shader loaded).
+
+Gotchas found along the way:
+
+* RANCHecker's RenderMan check looks up the world by the name `World` (`bpy.data.worlds["World"]`), so the scene's
+  world must be called that (`build_layout.py` does).
+* RANCHecker re-saves the scene file while preparing; that's fine, `paper_soul_v003_render.blend` is regenerated anyway.
+* Tested: the unpacked package renders identically locally, and the first cloud render (Oct 8) came back clean.
+
+## Notes
 
 * RenderMan for Blender ignores image textures in plain Blender materials, and its built-in Cycles converter predates Blender 4's Principled BSDF; hence `convert_to_rman.py`.
 * Paths are repo-relative, so the repo can be cloned anywhere (or uploaded for cloud rendering) once `assets/` is in place:
