@@ -3,3 +3,4 @@ assets/*
 build/
 *.blend1
 .DS_Store
+scenes/*_render.blend

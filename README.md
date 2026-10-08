@@ -46,6 +46,30 @@ $B -b scenes/paper_soul_v003.blend --python tools/preview_scene.py -- build/prev
 $B -b scenes/paper_soul_v003.blend --addons RenderManForBlender --python tools/preview_scene.py -- build/preview/layout_prman.png --engine prman
 ```
 
+Final frame (3840x2160, production sampling; the scene is built with `--final`, previews still use quick sampling):
+
+```bash
+$B -b --factory-startup --python tools/build_layout.py -- scenes/paper_soul_v003.blend --force --final
+$B -b scenes/paper_soul_v003.blend --addons RenderManForBlender -f 1   # -> build/final/paper_soul_v003.0001.png
+```
+
+On macOS this renders with RIS (XPU is not implemented there), expect hours, and it is only a backup:
+the submission needs XPU, i.e. the challenge's cloud rendering (Ranch Computing, CPU-only XPU; their deadline is
+Oct 19 09:00 Paris time) or a Windows/Linux machine.
+
+Cloud render package (for RANCHecker, which uses RenderMan's own scene packer):
+
+```bash
+$B -b --factory-startup --python tools/build_layout.py -- scenes/paper_soul_v003_render.blend --force --final --local
+```
+
+`--local` appends everything instead of linking (the packer can't collect our linked libraries in `../assets/derived/`),
+drops Blender's preview images and makes RenderMan paths absolute; the packer then copies the `.tex` files (UDIM tiles
+included) and `shaders/PaperFracture.oso` into the archive. The file is ~320 MB and not in git (`scenes/*_render.blend`).
+In RANCHecker: open this file in Blender 4.5.9 x64, renderer RenderMan, frame 1, and leave **"Use TEX (RenderMan)" off**
+(that mode copies UDIM paths literally and fails). Expect a ~4.4 GB `.vub`. Tested locally: the unpacked package renders
+identically, with no missing textures.
+
 Notes:
 
 * RenderMan for Blender ignores image textures in plain Blender materials, and its built-in Cycles converter predates Blender 4's Principled BSDF; hence `convert_to_rman.py`.

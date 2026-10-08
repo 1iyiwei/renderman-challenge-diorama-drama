@@ -12,7 +12,14 @@ created locally. Positions are Wood Collector world coordinates (meters).
 Usage (Blender 4.5, Intel build for RenderMan):
   Blender -b --factory-startup --addons RenderManForBlender \
       --python tools/build_layout.py -- scenes/paper_soul_v003.blend [--force] \
-      [--framing diorama|closeup] [--elevation DEGREES]
+      [--framing diorama|closeup] [--elevation DEGREES] [--final] [--local]
+
+  --local  append assets instead of linking: a self-contained scene for the cloud farm's packer
+           (RANCHecker -> RenderMan scene_package), e.g. scenes/paper_soul_v003_render.blend
+           (large, not in git); Blender preview images are dropped (RenderMan uses .tex)
+  --final  full 3840x2160 (100%), production sampling, output to build/final/<scene>.0001.png;
+           render with: Blender -b scenes/<scene>.blend --addons RenderManForBlender -f 1
+           (on macOS this is RIS, not XPU: use the cloud farm for the submission render)
 """
 
 import math
@@ -91,6 +98,12 @@ CAMERA_ELEVATION = 22.0   # degrees below horizontal
 CAMERA_TARGET = Vector((-5.4, -2.2, 1.7))
 CAMERA_ORTHO_SCALE = 9.5
 FRAME_MARGIN = 1.05
+# RenderMan sampling (min samples, max samples, pixel variance).
+PREVIEW_SAMPLING = (0, 128, 0.05)
+FINAL_SAMPLING = (64, 512, 0.02)
+
+
+LINK = True  # link assets (working scenes); False with --local (self-contained render package)
 
 
 def parse_args():
@@ -98,7 +111,9 @@ def parse_args():
     out = next((a for a in argv if a.endswith(".blend")), "scenes/paper_soul_v003.blend")
     framing = argv[argv.index("--framing") + 1] if "--framing" in argv else "diorama"
     elevation = float(argv[argv.index("--elevation") + 1]) if "--elevation" in argv else CAMERA_ELEVATION
-    return os.path.abspath(out), "--force" in argv, framing, elevation
+    global LINK
+    LINK = "--local" not in argv
+    return os.path.abspath(out), "--force" in argv, framing, elevation, "--final" in argv
 
 
 def new_collection(name):
@@ -108,7 +123,7 @@ def new_collection(name):
 
 
 def link_collection(blend, name):
-    with bpy.data.libraries.load(blend, link=True, relative=True) as (src, dst):
+    with bpy.data.libraries.load(blend, link=LINK, relative=True) as (src, dst):
         if name not in src.collections:
             raise RuntimeError(f"{name} not found in {blend}")
         dst.collections = [name]
@@ -127,7 +142,7 @@ def instance(coll_src, name, parent_coll, location=(0, 0, 0), rotation=(0, 0, 0)
 
 
 def add_character(parent_coll):
-    with bpy.data.libraries.load(CHAR_BLEND, link=True, relative=True) as (src, dst):
+    with bpy.data.libraries.load(CHAR_BLEND, link=LINK, relative=True) as (src, dst):
         dst.objects = [CHAR_NAME]
     linked = dst.objects[0]
     obj = bpy.data.objects.new("OldWoman", linked.data)  # local transform, linked mesh + materials
@@ -319,7 +334,7 @@ def add_string(parent_coll):
 
 def add_lights(parent_coll):
     """RenderMan lights when RfB is loaded (Eevee also sees them as Blender lights)."""
-    world = bpy.data.worlds.new("PreDawn")  # Eevee only; RenderMan uses the dome light
+    world = bpy.data.worlds.new("World")  # Eevee only (RenderMan uses the dome light); RANCHecker expects this name
     world.use_nodes = True
     bg = world.node_tree.nodes["Background"]
     bg.inputs["Color"].default_value = (0.03, 0.045, 0.09, 1)
@@ -416,19 +431,32 @@ def add_camera(parent_coll, elevation, fit_points=None):
     bpy.context.scene.camera = cam
 
 
-def setup_render():
+def setup_render(final):
+    """Preview settings by default; with final, the full-resolution production frame."""
     scene = bpy.context.scene
     scene.render.resolution_x, scene.render.resolution_y = 3840, 2160  # challenge max, 16:9
-    scene.render.resolution_percentage = 25
+    scene.render.resolution_percentage = 100 if final else 25
+    scene.frame_start = scene.frame_end = scene.frame_current = 1  # a still, not Blender's 250 frames
+    scene.render.filepath = "//../build/final/"  # Blender's own output (RfB uses the paths below)
+    scene.render.image_settings.file_format = "PNG"
+    scene.render.image_settings.color_depth = "16"
     if hasattr(scene, "renderman"):
         scene.render.engine = "PRMAN_RENDER"
         scene.renderman.renderVariant = "xpu"  # falls back to RIS on macOS; XPU on the cloud farm
+        rm = scene.renderman
+        # RfB writes its own output, by default under /tmp: keep it in the repo's (ignored) build/.
+        rm.root_path_output = "<blend_dir>/../build/renderman/<blend>"
+        rm.path_beauty_image_output = "<blend_dir>/../build/final/<blend>.<F4>.<ext>"
+        if final:
+            rm.hider_minSamples, rm.hider_maxSamples, rm.ri_pixelVariance = FINAL_SAMPLING
+        else:
+            rm.hider_minSamples, rm.hider_maxSamples, rm.ri_pixelVariance = PREVIEW_SAMPLING
     else:
         print("[layout] RenderMan add-on not loaded; leaving default engine")
 
 
 def main():
-    out, force, framing, elevation = parse_args()
+    out, force, framing, elevation, final = parse_args()
     if os.path.exists(out) and not force:
         raise SystemExit(f"{out} exists; bump the version number or pass --force")
     os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -455,8 +483,24 @@ def main():
         fit = [o.matrix_world @ Vector(c) for o in wood_collector.all_objects if o.type == "MESH"
                for c in o.bound_box] + [CRANE_POS]
     add_camera(cam_coll, elevation, fit)
-    setup_render()
+    setup_render(final)
 
+    if not LINK:
+        # Render package: RenderMan reads .tex files, so drop Blender's preview images (Eevee only),
+        # including the character's packed textures and the KitBash ones in ~/.kitbash3d.
+        for image in list(bpy.data.images):
+            bpy.data.images.remove(image)
+        # Absolute RenderMan paths: RfB's packer resolves <blend_dir> against each material's
+        # original file; it copies the files and rewrites the paths into the package anyway.
+        scenes_dir = os.path.dirname(out)
+        for mat in bpy.data.materials:
+            for node in mat.node_tree.nodes if mat.node_tree else []:
+                for attr in ("filename", "shadercode"):
+                    value = getattr(node, attr, None)
+                    if isinstance(value, str) and value.startswith("<blend_dir>/"):
+                        setattr(node, attr, os.path.normpath(os.path.join(scenes_dir, value[len("<blend_dir>/"):])))
+        if hasattr(bpy.context.scene, "rman_txmgr_list"):
+            bpy.context.scene.rman_txmgr_list.clear()  # stale texture registrations from the build
     bpy.ops.wm.save_as_mainfile(filepath=out)
     print(f"[layout] saved {os.path.relpath(out, REPO)} ({os.path.getsize(out) / 1e6:.1f} MB)")
     for lib in bpy.data.libraries:

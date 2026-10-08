@@ -29,6 +29,9 @@ else:
     engines = {e.identifier for e in bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items}
     scene.render.engine = "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in engines else "BLENDER_EEVEE"
 scene.render.resolution_percentage = percent
+if engine == "prman":  # previews stay quick even for a scene built with --final
+    scene.renderman.hider_minSamples, scene.renderman.hider_maxSamples = 0, 128
+    scene.renderman.ri_pixelVariance = 0.05
 if "--focus" in argv:  # zoom the scene camera onto a point: --focus x,y,z --ortho size
     from mathutils import Vector
     target = Vector([float(v) for v in argv[argv.index("--focus") + 1].split(",")])
