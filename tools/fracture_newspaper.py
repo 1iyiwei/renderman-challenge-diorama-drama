@@ -38,6 +38,16 @@ FRACTURE_PARAMS = {"cellSize": 0.07, "jitter": 0.9, "maxRemove": 0.97,
 from RenderManForBlender.rman_bl_nodes import __BL_NODES_MAP__ as NODES  # noqa: E402
 
 
+def detach_rfb_handlers():
+    """RfB's scene-update/save handlers scan textures and expand <blend_dir> against this file's
+    folder, creating stray directories (e.g. assets/source/assets/derived/...). Not needed here."""
+    for handlers in (bpy.app.handlers.depsgraph_update_post, bpy.app.handlers.save_pre,
+                     bpy.app.handlers.save_post, bpy.app.handlers.load_post):
+        for handler in list(handlers):
+            if getattr(handler, "__module__", "").startswith("RenderManForBlender"):
+                handlers.remove(handler)
+
+
 def compile_shader():
     oso = os.path.splitext(FRACTURE_OSL)[0] + ".oso"
     if not os.path.exists(oso) or os.path.getmtime(oso) < os.path.getmtime(FRACTURE_OSL):
@@ -54,6 +64,7 @@ def main():
             if "=" in arg:
                 name, value = arg.split("=")
                 overrides[name] = float(value)
+    detach_rfb_handlers()
     bpy.context.scene.render.engine = "PRMAN_RENDER"  # RfB nodes can only be added under its engine
     char = bpy.data.objects[CHAR_NAME]
     mesh = char.data
@@ -82,7 +93,7 @@ def main():
     osl.shadercode = oso
     osl.RefreshNodes(bpy.context, nodeOR=osl)  # creates the shader's sockets
     # At render time <blend_dir> is the scene's folder (scenes/), even for linked libraries.
-    osl.shadercode = "<blend_dir>/../" + os.path.relpath(oso, REPO)
+    osl["shadercode"] = "<blend_dir>/../" + os.path.relpath(oso, REPO)  # stored directly (see detach_rfb_handlers)
     params = dict(FRACTURE_PARAMS, startHeight=bottom + FRACTURE_START * (top - bottom), endHeight=top)
     glow_gain = overrides.pop("glowGain", GLOW_GAIN)  # not a shader parameter
     params.update(overrides)
@@ -109,6 +120,7 @@ def main():
     if "--no-presence" not in argv:
         nt.links.new(osl.outputs["presence"], surf.inputs["presence"])
 
+    bpy.context.preferences.filepaths.save_version = 0  # no .blend1 backup of the derived file
     bpy.ops.wm.save_as_mainfile(filepath=out)
     print(f"[fracture] newspaper z {bottom:.3f}..{top:.3f}, fracture from {params['startHeight']:.3f}; saved {out}")
 

@@ -51,6 +51,16 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 tx_jobs = {}  # source image path -> .tex path
 
 
+def detach_rfb_handlers():
+    """RfB's scene-update/save handlers scan textures and expand <blend_dir> against this file's
+    folder, creating stray directories (e.g. assets/source/assets/derived/...). Not needed here."""
+    for handlers in (bpy.app.handlers.depsgraph_update_post, bpy.app.handlers.save_pre,
+                     bpy.app.handlers.save_post, bpy.app.handlers.load_post):
+        for handler in list(handlers):
+            if getattr(handler, "__module__", "").startswith("RenderManForBlender"):
+                handlers.remove(handler)
+
+
 def scene_relative(path):
     """RenderMan path for a file in this repo, valid from any scene in scenes/.
 
@@ -115,7 +125,12 @@ def set_param(node, param, value):
         return
     if isinstance(getattr(node, param), str) and not isinstance(value, str):
         value = str(value)  # RfB stores int menus as string enums
-    setattr(node, param, value)
+    # Path values are stored directly (node[name] = ...): setting them through RfB's update
+    # callback expands <blend_dir> against the current file's folder and creates stray directories.
+    if param == "filename":
+        node[param] = value
+    else:
+        setattr(node, param, value)
 
 
 def tex_file(image):
@@ -224,6 +239,8 @@ def main():
             if obj.name not in KEEP:
                 bpy.data.objects.remove(obj)
         bpy.data.orphans_purge(do_recursive=True)
+    detach_rfb_handlers()
+    bpy.context.preferences.filepaths.save_version = 0  # no .blend1 backups of derived files
     scene = bpy.context.scene
     scene.render.engine = "PRMAN_RENDER"  # RfB nodes can only be added under its engine
     if scene.world is None:

@@ -6,7 +6,7 @@ assets/derived/, so the scene file stays small enough for git:
   - BigMediumSmall old woman reading (local object using the linked mesh), OldWoman_rman.blend
     (make both with tools/convert_to_rman.py; see README)
   - Oni props (collection instances), oni_assets.blend from tools/import_oni_assets.py
-Placeholder story elements (paper trail, string) and lights/camera are
+Placeholder story elements (paper trail) and lights/camera are
 created locally. Positions are Wood Collector world coordinates (meters).
 
 Usage (Blender 4.5, Intel build for RenderMan):
@@ -50,9 +50,12 @@ CHAR_ROT_Z = math.radians(-90)
 # Spread along the west veranda (the lit "stage" facing the camera), slightly enlarged.
 PROPS = [
     ("clock",              (-4.42, -2.6, 1.45),        (0, 0, -90), 1.3),  # west wall, behind her
-    ("kakuremino",         (-4.75, 0.7, 0.75),         (0, 0, -90), 1.0),  # west wall north of the doors, empty
+    ("kakuremino",         (-4.75, 0.7, 1.15),         (0, 0, -90), 1.0),  # north of the doors, empty, above the basket
     ("setsubun_bagClosed", (-5.45, -1.75, VERANDA_Z),  (0, 0, 20),  3.0),  # by her feet, still tied shut
-    ("cutleryKnife",       (-5.55, -3.15, VERANDA_Z + 0.035), (90, 0, 75), 1.3),  # beside the string
+    # An abandoned meal on the lit corner of the veranda ("false clues" that reward looking):
+    ("bentoKappa",         (-5.4, -3.1, VERANDA_Z),    (0, 0, 30),  1.3),  # cucumber bento
+    ("bentoNaridon",       (-5.1, -3.3, VERANDA_Z),    (0, 0, -20), 0.3),  # rice ball in its bamboo-leaf wrap
+    ("cutleryKnife",       (-5.68, -2.95, VERANDA_Z + 0.035), (90, 0, 40), 1.3),  # the cleaver, set down
 ]
 
 # Paper trail: from the newspaper out from under the eave, then a wide S-curve rising in front
@@ -78,10 +81,6 @@ UV_PER_METER = 0.9  # newspaper print density: ~0.37 UV across the 0.42 m sheet
 SCRAP_UV_MAX = 0.16
 
 NEWSPAPER_MATERIAL = "M_Papers"
-
-# String: tied to the stool leg, lying on the floor and ending, cut, beside the knife.
-STRING_POINTS = [(-4.85, -2.75, VERANDA_Z + 0.03), (-5.15, -2.9, VERANDA_Z + 0.004),
-                 (-5.35, -3.0, VERANDA_Z + 0.004), (-5.5, -3.08, VERANDA_Z + 0.004)]
 
 # Reading lantern hanging from the eave, above her and just in front (center of the lantern),
 # high enough to clear her hat from the camera.
@@ -209,7 +208,8 @@ def paper_material(name, glow_color, glow_gain):
         output = nt.nodes.new("RendermanOutputNode")
         surf = nt.nodes.new(nodes["PxrSurface"])
         tex = nt.nodes.new(nodes["PxrTexture"])
-        tex.filename, tex.linearize = "<blend_dir>/../" + os.path.relpath(NEWSPAPER_TEX, REPO), 1
+        tex["filename"] = "<blend_dir>/../" + os.path.relpath(NEWSPAPER_TEX, REPO)  # direct: no RfB callback
+        tex.linearize = 1
         blend = nt.nodes.new(nodes["PxrBlend"])
         blend.operation = "18"  # Multiply
         blend.bottomRGB = glow_color
@@ -309,27 +309,6 @@ def add_paper_trail(parent_coll, oni_crane, start=None):
     if hasattr(crane, "renderman"):  # the soul: override the linked crane's paper with a glowing one
         crane.renderman.rman_material_override = paper_material("SoulCrane", GLOW_COOL, 1.2)
     return crane
-
-
-def add_string(parent_coll):
-    curve = bpy.data.curves.new("SoulString", "CURVE")
-    curve.dimensions = "3D"
-    curve.bevel_depth = 0.006
-    spline = curve.splines.new("NURBS")
-    spline.points.add(len(STRING_POINTS) - 1)
-    for p, co in zip(spline.points, STRING_POINTS):
-        p.co = (*co, 1)
-    spline.use_endpoint_u = True
-    spline.order_u = 3
-    mat = bpy.data.materials.new("String")
-    mat.use_nodes = True
-    mat.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.5, 0.05, 0.04, 1)
-    rman_surface(mat, diffuseColor=(0.5, 0.05, 0.04), enableGlow=True,
-                 glowColor=(0.9, 0.12, 0.08), glowGain=0.25)  # red thread, faintly visible at night
-    curve.materials.append(mat)
-    obj = bpy.data.objects.new("SoulString", curve)
-    parent_coll.objects.link(obj)
-    return obj
 
 
 def add_lights(parent_coll):
@@ -455,15 +434,27 @@ def setup_render(final):
         print("[layout] RenderMan add-on not loaded; leaving default engine")
 
 
+def detach_rfb_handlers():
+    """RfB's link/scene-update/save handlers scan textures and expand <blend_dir> against each
+    linked file's folder, creating stray directories (e.g. assets/assets/derived/...)."""
+    for handlers in (bpy.app.handlers.depsgraph_update_post, bpy.app.handlers.save_pre,
+                     bpy.app.handlers.save_post, bpy.app.handlers.load_post):
+        for handler in list(handlers):
+            if getattr(handler, "__module__", "").startswith("RenderManForBlender"):
+                handlers.remove(handler)
+
+
 def main():
     out, force, framing, elevation, final = parse_args()
     if os.path.exists(out) and not force:
         raise SystemExit(f"{out} exists; bump the version number or pass --force")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)  # also unloads add-ons
+    bpy.context.preferences.filepaths.save_version = 0  # no .blend1 backups (the script is the source)
     bpy.ops.wm.save_as_mainfile(filepath=out)  # save first so library paths are made relative
     if addon_utils.enable("RenderManForBlender", default_set=False):  # after the empty save: its save hook needs a world
         bpy.context.scene.render.engine = "PRMAN_RENDER"  # before adding RfB nodes and lights
+        detach_rfb_handlers()
 
     set_coll, char_coll = new_collection("Set"), new_collection("Character")
     props_coll, soul_coll = new_collection("Props"), new_collection("PaperSoul")
@@ -475,7 +466,6 @@ def main():
     for name, loc, rot, scale in PROPS:
         instance(link_collection(ONI_BLEND, name), name, props_coll, loc, rot, scale)
     add_paper_trail(soul_coll, link_collection(ONI_BLEND, "origami"), newspaper_top)
-    add_string(soul_coll)
     add_lights(light_coll)
     add_lantern(props_coll)
     fit = None
@@ -498,7 +488,7 @@ def main():
                 for attr in ("filename", "shadercode"):
                     value = getattr(node, attr, None)
                     if isinstance(value, str) and value.startswith("<blend_dir>/"):
-                        setattr(node, attr, os.path.normpath(os.path.join(scenes_dir, value[len("<blend_dir>/"):])))
+                        node[attr] = os.path.normpath(os.path.join(scenes_dir, value[len("<blend_dir>/"):]))
         if hasattr(bpy.context.scene, "rman_txmgr_list"):
             bpy.context.scene.rman_txmgr_list.clear()  # stale texture registrations from the build
     bpy.ops.wm.save_as_mainfile(filepath=out)

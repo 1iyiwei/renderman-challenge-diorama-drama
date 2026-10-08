@@ -364,7 +364,7 @@ Plan with Wood Collector:
 * The paper soul is exaggerated in scale (dream logic) so it reads at full-diorama framing, and it glows: warm near her, cool spirit-blue toward the crane.
 * Trail: a wide S-curve rising in front of the dark thatched roof, with the crane above the ridge.
 * Reading light: a paper lantern hanging from the eave, in front of and above her.
-* Story props spread along the lit west veranda and slightly enlarged: clock on the wall behind her, empty cape north of the doors, bean bag by her feet, knife beside the red string.
+* Story props spread along the lit west veranda and slightly enlarged: clock on the wall behind her, empty cape north of the doors, bean bag by her feet, knife on the floor.
 * Rejected: barrel distortion. As a post-process it is not allowed (compositing is limited to grading, AOV/LPE blending and backgrounds), and in-camera it fights the isometric look. A literal glass dome over the diorama is a possible later experiment.
 
 ### Next version: the newspaper fractures into the soul
@@ -374,3 +374,11 @@ The newspaper she is reading stays whole at the bottom, cracks more and more tow
 * Shader-based: a Voronoi crack mask on the newspaper's presence (cutout), with cell removal probability rising toward the top edge (by UV v), and darkened crack lines.
 * Scraps are cut from the same newspaper texture (same print), so the trail visibly comes from her paper.
 * Fold progression continues along the trail: torn flat pieces → creased → crane.
+
+### Decisions (Oct 8)
+
+* First cloud render (Ranch, XPU on CPU, 4K, 512 samples): clean, no noise; props readable when zoomed in, accepted as detail for slow looking.
+* No background image: the challenge's example diorama sits on a plain backdrop too.
+* Red string removed. Detached from the crane it no longer read as a tether, and since the crane rises out of the newspaper like the other scraps, a string to it raised the question of why. Without it, the scraps and crane can also be read as her dream, which keeps the story more open.
+* The knife (`cutleryKnife`) reads as a chopping blade rather than a string cutter, so it became part of an abandoned meal on the lit corner of the veranda: the open cucumber bento (`bentoKappa`), the rice ball in its bamboo-leaf wrap (`bentoNaridon`) and the cleaver set down beside them. Everyday "false clues" that reward slow looking.
+* The straw cape now hangs higher, clear of the Wood Collector's own wicker basket below it.

@@ -167,7 +167,12 @@ def set_param(node, param, value):
     elif hasattr(value, "__len__") and not isinstance(value, str):
         value = tuple(value)
     try:
-        setattr(node, param, value)
+        # Path values are stored directly (node[name] = ...): setting them through RfB's update
+        # callback expands <blend_dir> against the current file's folder and creates stray directories.
+        if param == "filename":
+            node[param] = value
+        else:
+            setattr(node, param, value)
     except (TypeError, ValueError) as e:
         print(f"[oni]   {node.name}.{param} = {value!r} failed: {e}")
 
@@ -331,6 +336,16 @@ def import_asset(usd_file, usd_data, x_offset):
     return width
 
 
+def detach_rfb_handlers():
+    """RfB's scene-update/save handlers scan textures and expand <blend_dir> against this file's
+    folder, creating stray directories (e.g. assets/assets/derived/...). Not needed here."""
+    for handlers in (bpy.app.handlers.depsgraph_update_post, bpy.app.handlers.save_pre,
+                     bpy.app.handlers.save_post, bpy.app.handlers.load_post):
+        for handler in list(handlers):
+            if getattr(handler, "__module__", "").startswith("RenderManForBlender"):
+                handlers.remove(handler)
+
+
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     out = argv[0] if argv and argv[0].endswith(".blend") else None
@@ -345,10 +360,12 @@ def main():
         bpy.context.scene.world = bpy.data.worlds.new("World")  # RfB's save hook expects one
         if addon_utils.enable("RenderManForBlender", default_set=False):
             bpy.context.scene.render.engine = "PRMAN_RENDER"  # RfB nodes can only be added under its engine
+            detach_rfb_handlers()
     x = 0.0
     for path, data in zip(paths, parsed):
         x += import_asset(path, data, x) + SPACING
     if out:
+        bpy.context.preferences.filepaths.save_version = 0  # no .blend1 backups of derived files
         bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(out))  # Blender image paths saved relative
 
 
