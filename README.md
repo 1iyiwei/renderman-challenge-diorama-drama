@@ -2,6 +2,24 @@
 
 ## [2026 Diorama Drama](diorama-drama.md)
 
+## Progress
+
+Work in progress, also posted to the [RenderMan Discord thread](https://discord.com/channels/479703857883250698/1557180427838562304);
+the reasoning behind each step is in the ideation notes, [diorama-drama.md](diorama-drama.md).
+Click a thumbnail for the full-resolution image (the cloud renders are 3840x2160).
+Thumbnails are made with `python3 tools/make_thumbs.py`.
+
+| Date | Images | Notes |
+|---|---|---|
+| Aug 9 | <a href="outputs/v000_dream_sketch.png"><img src="outputs/thumbs/v000_dream_sketch.jpg" width="360" alt="v000_dream_sketch"></a> | Rough sketch of the dream that inspired this project: myself drifting like a piece of paper during a restless sleep.<br><sub>`v000_dream_sketch`</sub> |
+| Oct 6 | <a href="outputs/v000_assets_oni.png"><img src="outputs/thumbs/v000_assets_oni.jpg" width="360" alt="v000_assets_oni"></a><br><a href="outputs/v000_character.png"><img src="outputs/thumbs/v000_character.jpg" width="360" alt="v000_character"></a><br><a href="outputs/v000_sets.png"><img src="outputs/thumbs/v000_sets.jpg" width="360" alt="v000_sets"></a> | Exploring the challenge assets: the Oni props (a clock, a straw invisibility cape, a Setsubun bean bag, an origami crane), the old woman reading who became the center character, and five KitBash3D sets with her for scale. The Wood Collector farmhouse won ([set candidates](diorama-drama.md#kitbash3d-set-candidates)).<br><sub>`v000_assets_oni`, `v000_character`, `v000_sets`</sub> |
+| Oct 6 | <a href="outputs/v001_prman.png"><img src="outputs/thumbs/v001_prman.jpg" width="360" alt="v001_prman"></a> | First Blender + RenderMan preview of the story setup, combining the dream with the challenge assets: the old woman reading on the veranda of the Wood Collector house, Oni props, a placeholder paper trail ([concept](diorama-drama.md#concept-paper-soul-working-title-407-am)).<br><sub>`v001_prman`</sub> |
+| Oct 7 | <a href="outputs/v002_prman.png"><img src="outputs/thumbs/v002_prman.jpg" width="360" alt="v002_prman"></a> | Lower camera, zoomed out to show the whole diorama; the paper trail needs to be larger to read at this scale.<br><sub>`v002_prman`</sub> |
+| Oct 7 | <a href="outputs/v002_trail_prman.png"><img src="outputs/thumbs/v002_trail_prman.jpg" width="360" alt="v002_trail_prman"></a> | More pronounced paper trail: a wider S-curve over the roof, glowing scraps printed with her newspaper, the crane above the ridge. The reading lantern hangs above her, and the smaller story objects are spread along the veranda ([composition decisions](diorama-drama.md#composition-decisions-oct-67)).<br><sub>`v002_trail_prman`</sub> |
+| Oct 7 | <a href="outputs/v003_prman.png"><img src="outputs/thumbs/v003_prman.jpg" width="360" alt="v003_prman"></a> | Her newspaper fractures into the paper trail and glows like the scraps ([fracture plan](diorama-drama.md#next-version-the-newspaper-fractures-into-the-soul)).<br><sub>`v003_prman`</sub> |
+| Oct 8 | <a href="outputs/v003_old_props_cloud.png"><img src="outputs/thumbs/v003_old_props_cloud.jpg" width="360" alt="v003_old_props_cloud"></a><br><a href="outputs/v003_old_props_cloud_veranda.png"><img src="outputs/thumbs/v003_old_props_cloud_veranda.jpg" width="360" alt="v003_old_props_cloud_veranda"></a> | First 4K XPU render on the challenge's cloud farm (Ranch Computing), with the veranda at full resolution below.<br><sub>`v003_old_props_cloud`, `v003_old_props_cloud_veranda`</sub> |
+| Oct 8 | <a href="outputs/v003_new_props_cloud.png"><img src="outputs/thumbs/v003_new_props_cloud.jpg" width="360" alt="v003_new_props_cloud"></a><br><a href="outputs/v003_new_props_cloud_veranda.png"><img src="outputs/thumbs/v003_new_props_cloud_veranda.jpg" width="360" alt="v003_new_props_cloud_veranda"></a> | Revised props, 4K XPU: the red string removed; an abandoned meal (cucumber bento, rice ball, cleaver) added; the straw cape hung higher ([decisions](diorama-drama.md#decisions-oct-8)).<br><sub>`v003_new_props_cloud`, `v003_new_props_cloud_veranda`</sub> |
+
 ## Setup
 
 Challenge assets are licensed for the challenge only and are not in git (`assets/` is gitignored).
