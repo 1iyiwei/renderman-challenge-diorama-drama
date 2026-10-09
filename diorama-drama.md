@@ -382,3 +382,10 @@ The newspaper she is reading stays whole at the bottom, cracks more and more tow
 * Red string removed. Detached from the crane it no longer read as a tether, and since the crane rises out of the newspaper like the other scraps, a string to it raised the question of why. Without it, the scraps and crane can also be read as her dream, which keeps the story more open.
 * The knife (`cutleryKnife`) reads as a chopping blade rather than a string cutter, so it became part of an abandoned meal on the lit corner of the veranda: the open cucumber bento (`bentoKappa`), the rice ball in its bamboo-leaf wrap (`bentoNaridon`) and the cleaver set down beside them. Everyday "false clues" that reward slow looking.
 * The straw cape now hangs higher, clear of the Wood Collector's own wicker basket below it.
+
+### Decisions (Oct 9)
+
+* Discord feedback: the link between "spirit" and "sleep" wasn't coming through (it could read as a metaphor for reading); suggested tilting her head to show she has lost composure to sleep, and posting images on a black background.
+* Her head now droops 25° to her right (toward the rising trail) and 12° forward, blended into the neck (`tools/fracture_newspaper.py`).
+* Tried a deeper droop (35°/18°) with the newspaper sagging 35° toward her lap: kept the original droop with the newspaper held up, which shows the newspaper (the start of the paper soul) more clearly; the sagging version looked flat.
+* Renders are flattened onto black (`tools/flatten_png.py`): the night scene reads better on black than on the pale transparent-background color, and Discord shows transparent PNGs badly.
