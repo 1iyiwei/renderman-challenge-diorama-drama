@@ -280,8 +280,20 @@ Folklore hook: the Japanese *ikiryō*, a living person's spirit that leaves the 
 ### Story
 
 An old woman has dozed off on her stool while reading the newspaper before dawn.
-Her spirit is slipping out of her body as paper, drifting toward the window.
-Whether it will make it back is left open.
+Her spirit is slipping out of her body as paper: the newspaper breaks apart into glowing scraps that rise over the roof and fold into a paper crane.
+Whether it will make it back, or whether it is all her dream, is left open.
+
+(Updated Oct 18 to match the final image. The original concept had the paper drifting toward a window; the dream reading came with removing the red string on Oct 8.)
+
+### Look closer (optional, for the post)
+
+The straw cape on the wall is a kakuremino, the cloak of invisibility; the bag of Setsubun beans for warding off oni is still tied shut; her meal is left unfinished.
+
+Use only if explaining the clues is wanted: the challenge is about discovery, so they can also be left for viewers to find.
+
+### Credit (required by the challenge)
+
+Assets by BigMediumSmall, KitBash3D, Netflix, and Pixar. RenderMan 'Diorama Drama' Art Challenge © Disney/Pixar.
 
 ### The center character
 
