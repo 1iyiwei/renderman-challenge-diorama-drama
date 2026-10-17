@@ -15,7 +15,7 @@ from the mesh, ignoring object-level material slot overrides.
 Usage (Blender 4.5 Intel with RenderMan for Blender):
   Blender -b assets/derived/OldWoman_rman.blend --addons RenderManForBlender \
       --python tools/fracture_newspaper.py -- assets/derived/OldWoman_fractured_rman.blend \
-      [--no-presence] [--param name=value ...]   (e.g. --param cellSize=0.03 crackDarkness=0.5 glowGain=0.5 newspaperScale=1.2 newspaperSag=40 headRoll=-20)
+      [--no-presence] [--param name=value ...]   (e.g. --param cellSize=0.03 crackDarkness=0.5 glowGain=0.5 newspaperScale=1.2 newspaperSag=40 headRoll=-20 bodyLean=-8)
 """
 
 import math
@@ -44,6 +44,12 @@ NECK_PIVOT = Vector((-0.015, -0.17, 1.22))  # below the chin (eyes at z ~1.33)
 HEAD_BLEND = (1.17, 1.27)  # z range over which the rotation fades in (shoulders -> chin)
 HEAD_RADIUS = (0.16, 0.30)  # horizontal distance from the neck over which it fades out (keeps the shoulders)
 HAT_MATERIAL = "Hat"  # moves rigidly with the head
+# Optional upper-body lean (as people slump sideways when dozing off sitting up): the torso,
+# arms, head and newspaper rotate about the hips; legs, feet and stool stay.
+BODY_LEAN = 0.0  # degrees about +Y: negative leans to her right (same side as the head)
+HIP_PIVOT = Vector((0.0, -0.05, 0.70))  # on the stool seat (top at z 0.63), below the belt (0.81-0.92)
+LEAN_BLEND = (0.72, 0.88)  # z range over which the lean fades in (upper thighs -> waist)
+LEAN_EXCLUDE = ("M_Stool", "OldMan_Legs", "Shoes_Grey", "WomanPants1_Dirty")  # never move
 FRACTURE_START = 0.25  # fraction of the sheet's height where fracturing begins
 # Glow matching the first paper scraps (GLOW_WARM / GLOW_GAIN[0] in build_layout.py).
 GLOW_COLOR = (1.0, 0.75, 0.45)
@@ -98,6 +104,24 @@ def droop_head(mesh, roll, pitch, exclude):
     return moved
 
 
+def lean_body(mesh, lean):
+    """Rotate the upper body about the hips, fading in from the upper thighs to the waist."""
+    if not lean:
+        return 0
+    full = Quaternion((0, 1, 0), math.radians(lean))
+    fixed_slots = {i for i, m in enumerate(mesh.materials) if m and m.name.startswith(LEAN_EXCLUDE)}
+    fixed = {v for p in mesh.polygons if p.material_index in fixed_slots for v in p.vertices}
+    moved = 0
+    for v in mesh.vertices:
+        if v.index in fixed:
+            continue
+        w = smoothstep(*LEAN_BLEND, v.co.z)
+        if w > 0.0:
+            v.co = HIP_PIVOT + Quaternion().slerp(full, w) @ (v.co - HIP_PIVOT)
+            moved += 1
+    return moved
+
+
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:]
     out = os.path.abspath(argv[0])
@@ -128,6 +152,9 @@ def main():
     pitch = overrides.pop("headPitch", HEAD_PITCH)
     moved = droop_head(mesh, roll, pitch, exclude=set(paper))
     print(f"[fracture] head drooped (roll {roll}, pitch {pitch}): {moved} vertices")
+    lean = overrides.pop("bodyLean", BODY_LEAN)
+    if lean:  # after the head droop and newspaper scaling, so head and paper lean with the body
+        print(f"[fracture] body leaned ({lean}): {lean_body(mesh, lean)} vertices")
     zs = [mesh.vertices[v].co.z for v in paper]
     bottom, top = min(zs), max(zs)
 
