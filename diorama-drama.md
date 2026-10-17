@@ -395,3 +395,7 @@ The newspaper she is reading stays whole at the bottom, cracks more and more tow
 * Leif Pedersen (Discord): the drooping pose works a lot better; tipping the head more to one side would help, since bent forward she still looks engaged with the paper. For the final post, upload a zip with the PNG inside to avoid Discord's WebP compression.
 * Her upper body now leans 9° to her right with the head (people slump sideways when dozing off sitting up), and the head tips 30° to the side but only 5° forward, away from the paper. Legs, feet and stool stay; the lean blends in at the waist (`tools/fracture_newspaper.py`).
 * Local RenderMan stopped working after moving: the non-commercial license is bound to the private Wi-Fi MAC address of the network where it was activated. Keeping the private address on (privacy); re-activate in LicenseApp when needed, or render on Ranch.
+
+### Decisions (Oct 18)
+
+* The reading light was a plain glowing cylinder. The house's KitBash lanterns were too large to hang above her without blocking her face, and too dim for reading light, so instead the cylinder became a chōchin (提灯): barrel-shaped paper body, dark wooden rims and seven bamboo ribs, same size, position and brightness (`lantern_meshes()` in `tools/build_layout.py`). The ribs read as fine lines in the 4K render.

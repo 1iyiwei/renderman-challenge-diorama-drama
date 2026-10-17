@@ -86,6 +86,8 @@ NEWSPAPER_MATERIAL = "M_Papers"
 # high enough to clear her hat from the camera.
 LANTERN_POS = Vector((-5.45, -2.6, 2.85))
 LANTERN_CORD_TOP = 4.3  # just under the roof
+LANTERN_RADIUS, LANTERN_HEIGHT = 0.12, 0.34  # same size as the earlier placeholder cylinder
+LANTERN_RIBS = 7  # bamboo ribs showing as dark lines across the glowing paper
 CRANE_SCALE = 3.0
 
 # Looking from the west-south-west (Li-Yi's v002 camera azimuth), 22 degrees down:
@@ -359,33 +361,88 @@ def add_lights(parent_coll):
           {"intensity": 1.0, "exposure": 3.5}, size=0.05)
 
 
+def lantern_meshes():
+    """Chochin paper lantern around the origin: a barrel-shaped paper body, wooden rims, bamboo ribs."""
+    radius, height, sides = LANTERN_RADIUS, LANTERN_HEIGHT, 32
+
+    def ring(r, z):
+        return [(r * math.cos(2 * math.pi * k / sides), r * math.sin(2 * math.pi * k / sides), z)
+                for k in range(sides)]
+
+    def lathe(name, profile, cap_top=False, cap_bottom=False):
+        """Surface of revolution through (r, z) profile points (bottom to top)."""
+        verts, faces = [], []
+        for r, z in profile:
+            verts += ring(r, z)
+        for i in range(len(profile) - 1):
+            for k in range(sides):
+                a, b = i * sides + k, i * sides + (k + 1) % sides
+                faces.append((a, b, b + sides, a + sides))
+        if cap_bottom:
+            faces.append(tuple(reversed(range(sides))))
+        if cap_top:
+            faces.append(tuple(range((len(profile) - 1) * sides, len(profile) * sides)))
+        mesh = bpy.data.meshes.new(name)
+        mesh.from_pydata(verts, [], faces)
+        return mesh
+
+    # Paper body: barrel profile, narrower at the rims.
+    rows = 14
+    body = [(radius * (0.80 + 0.20 * math.sin(math.pi * i / rows)), -height / 2 + height * i / rows)
+            for i in range(rows + 1)]
+    paper = lathe("LanternPaper", body)
+    # Wooden rims: short closed rings at the top and bottom.
+    rim_r, rim_h = radius * 0.86, 0.022
+    rims = []
+    for name, z in (("LanternRimTop", height / 2), ("LanternRimBottom", -height / 2)):
+        rims.append(lathe(name, [(rim_r, z - rim_h / 2), (rim_r, z + rim_h / 2)], cap_top=True, cap_bottom=True))
+    # Bamboo ribs: thin rings just outside the paper, following the barrel.
+    ribs = []
+    for i in range(1, LANTERN_RIBS + 1):
+        t = i / (LANTERN_RIBS + 1)
+        r = radius * (0.80 + 0.20 * math.sin(math.pi * t)) + 0.002
+        z = -height / 2 + height * t
+        w = 0.004
+        ribs.append(lathe(f"LanternRib{i}", [(r, z - w / 2), (r + 0.003, z), (r, z + w / 2)]))
+    return paper, rims, ribs
+
+
 def add_lantern(parent_coll):
-    """Placeholder hanging paper lantern around the LanternWarm light, on a cord from the eave."""
-    bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=0.12, depth=0.34, location=LANTERN_POS)
-    obj = bpy.context.object
-    obj.name = "ReadingLantern"
-    for coll in list(obj.users_collection):
-        coll.objects.unlink(obj)
-    parent_coll.objects.link(obj)
-    mat = bpy.data.materials.new("LanternPaper")
-    mat.use_nodes = True
-    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    """Hanging paper lantern (chochin) around the LanternWarm light, on a cord from the eave."""
+    paper_mesh, rim_meshes, rib_meshes = lantern_meshes()
+
+    paper = bpy.data.materials.new("LanternPaper")
+    paper.use_nodes = True
+    bsdf = paper.node_tree.nodes["Principled BSDF"]
     bsdf.inputs["Base Color"].default_value = (0.9, 0.8, 0.6, 1)
     bsdf.inputs["Emission Color"].default_value = (1.0, 0.6, 0.3, 1)
     bsdf.inputs["Emission Strength"].default_value = 3.0
-    rman_surface(mat, diffuseColor=(0.9, 0.8, 0.6), enableGlow=True,
+    paper.use_backface_culling = False
+    rman_surface(paper, diffuseColor=(0.9, 0.8, 0.6), diffuseDoubleSided=1, enableGlow=True,
                  glowColor=(1.0, 0.6, 0.3), glowGain=2.0)
-    obj.data.materials.append(mat)
-    if hasattr(obj, "renderman"):
-        obj.renderman.rman_visibilityTransmission = "0"  # let the light inside shine through
+    wood = bpy.data.materials.new("LanternWood")
+    wood.use_nodes = True
+    wood.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.10, 0.06, 0.035, 1)
+    wood.node_tree.nodes["Principled BSDF"].inputs["Roughness"].default_value = 0.6
+    rman_surface(wood, diffuseColor=(0.10, 0.06, 0.035))
+
+    for mesh, mat in [(paper_mesh, paper)] + [(m, wood) for m in rim_meshes + rib_meshes]:
+        mesh.materials.append(mat)
+        obj = bpy.data.objects.new(mesh.name, mesh)
+        obj.location = LANTERN_POS
+        parent_coll.objects.link(obj)
+        if hasattr(obj, "renderman"):
+            # Let the light inside shine out (no shadows from the paper, rims or ribs).
+            obj.renderman.rman_visibilityTransmission = "0"
 
     cord = bpy.data.curves.new("LanternCord", "CURVE")
     cord.dimensions, cord.bevel_depth = "3D", 0.004
     spline = cord.splines.new("POLY")
     spline.points.add(1)
-    spline.points[0].co = (*(LANTERN_POS + Vector((0, 0, 0.17))), 1)
+    spline.points[0].co = (*(LANTERN_POS + Vector((0, 0, LANTERN_HEIGHT / 2))), 1)
     spline.points[1].co = (LANTERN_POS.x, LANTERN_POS.y, LANTERN_CORD_TOP, 1)
     cord_obj = bpy.data.objects.new("LanternCord", cord)
+    cord_obj.data.materials.append(wood)
     parent_coll.objects.link(cord_obj)
 
 
