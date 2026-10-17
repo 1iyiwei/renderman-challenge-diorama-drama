@@ -34,8 +34,8 @@ NEWSPAPER_MATERIAL = "M_Papers"
 # Exaggerated (dream logic) so the fracture reads at full-diorama framing.
 NEWSPAPER_SCALE = 1.4
 # Dozing head (mesh object space: she faces -Y, up is +Z, her right is -X).
-HEAD_ROLL = -25.0   # degrees about +Y: negative tips the head to her right (screen left, toward the trail)
-HEAD_PITCH = 12.0   # degrees about +X: positive nods the head forward
+HEAD_ROLL = -30.0   # degrees about +Y: negative tips the head to her right (screen left, toward the trail)
+HEAD_PITCH = 5.0   # degrees about +X: positive nods the head forward
 # Optional: the newspaper sags toward her lap, rotated forward about where her hands hold it.
 # Off by default: held up, the newspaper reads more clearly (tried 35 degrees on Oct 9: too flat).
 NEWSPAPER_SAG = 0.0  # degrees; keep < 90 so the top edge stays highest (the fracture works by height)
@@ -44,9 +44,9 @@ NECK_PIVOT = Vector((-0.015, -0.17, 1.22))  # below the chin (eyes at z ~1.33)
 HEAD_BLEND = (1.17, 1.27)  # z range over which the rotation fades in (shoulders -> chin)
 HEAD_RADIUS = (0.16, 0.30)  # horizontal distance from the neck over which it fades out (keeps the shoulders)
 HAT_MATERIAL = "Hat"  # moves rigidly with the head
-# Optional upper-body lean (as people slump sideways when dozing off sitting up): the torso,
+# Upper-body lean (as people slump sideways when dozing off sitting up): the torso,
 # arms, head and newspaper rotate about the hips; legs, feet and stool stay.
-BODY_LEAN = 0.0  # degrees about +Y: negative leans to her right (same side as the head)
+BODY_LEAN = -9.0  # degrees about +Y: negative leans to her right (same side as the head)
 HIP_PIVOT = Vector((0.0, -0.05, 0.70))  # on the stool seat (top at z 0.63), below the belt (0.81-0.92)
 LEAN_BLEND = (0.72, 0.88)  # z range over which the lean fades in (upper thighs -> waist)
 LEAN_EXCLUDE = ("M_Stool", "OldMan_Legs", "Shoes_Grey", "WomanPants1_Dirty")  # never move

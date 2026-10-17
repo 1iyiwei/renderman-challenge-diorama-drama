@@ -21,6 +21,8 @@ MAX_SIZE = 800
 def main():
     os.makedirs(THUMBS, exist_ok=True)
     for png in sorted(glob.glob(os.path.join(OUTPUTS, "*.png"))):
+        if png.endswith("_black.png"):  # flattened copies for posting (tools/flatten_png.py), not timeline images
+            continue
         thumb = os.path.join(THUMBS, os.path.splitext(os.path.basename(png))[0] + ".jpg")
         if os.path.exists(thumb) and os.path.getmtime(thumb) >= os.path.getmtime(png):
             continue

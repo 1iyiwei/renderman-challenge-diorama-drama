@@ -4,3 +4,6 @@ build/
 *.blend1
 .DS_Store
 scenes/*_render.blend
+# Derived from outputs/*.png (tools/flatten_png.py) and the zips posted to Discord
+outputs/*_black.png
+outputs/*.zip

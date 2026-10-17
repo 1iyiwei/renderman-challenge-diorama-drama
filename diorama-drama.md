@@ -389,3 +389,9 @@ The newspaper she is reading stays whole at the bottom, cracks more and more tow
 * Her head now droops 25° to her right (toward the rising trail) and 12° forward, blended into the neck (`tools/fracture_newspaper.py`).
 * Tried a deeper droop (35°/18°) with the newspaper sagging 35° toward her lap: kept the original droop with the newspaper held up, which shows the newspaper (the start of the paper soul) more clearly; the sagging version looked flat.
 * Renders are flattened onto black (`tools/flatten_png.py`): the night scene reads better on black than on the pale transparent-background color, and Discord shows transparent PNGs badly.
+
+### Decisions (Oct 17)
+
+* Leif Pedersen (Discord): the drooping pose works a lot better; tipping the head more to one side would help, since bent forward she still looks engaged with the paper. For the final post, upload a zip with the PNG inside to avoid Discord's WebP compression.
+* Her upper body now leans 9° to her right with the head (people slump sideways when dozing off sitting up), and the head tips 30° to the side but only 5° forward, away from the paper. Legs, feet and stool stay; the lean blends in at the waist (`tools/fracture_newspaper.py`).
+* Local RenderMan stopped working after moving: the non-commercial license is bound to the private Wi-Fi MAC address of the network where it was activated. Keeping the private address on (privacy); re-activate in LicenseApp when needed, or render on Ranch.
