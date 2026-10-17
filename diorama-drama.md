@@ -295,7 +295,7 @@ The clues themselves, deliberately not spelled out in the post: the straw cape o
 
 ### Credit (required by the challenge)
 
-Assets by BigMediumSmall, KitBash3D, Netflix, and Pixar. RenderMan 'Diorama Drama' Art Challenge © Disney/Pixar.
+Assets by BigMediumSmall, KitBash3D, Netflix, and Pixar. RenderMan 'Diorama Drama' Art Challenge © Disney/Pixar. Cloud rendering by Ranch Computing.
 
 ### The center character
 
