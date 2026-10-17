@@ -285,11 +285,11 @@ Whether it will make it back, or whether it is all her dream, is left open.
 
 (Updated Oct 18 to match the final image. The original concept had the paper drifting toward a window; the dream reading came with removing the red string on Oct 8.)
 
-### Look closer (optional, for the post)
+### Look closer
 
-The straw cape on the wall is a kakuremino, the cloak of invisibility; the bag of Setsubun beans for warding off oni is still tied shut; her meal is left unfinished.
+As posted to Discord (Oct 18): "A collection of small objects hint at the story for the viewers to find."
 
-Use only if explaining the clues is wanted: the challenge is about discovery, so they can also be left for viewers to find.
+The clues themselves, deliberately not spelled out in the post: the straw cape on the wall is a kakuremino, the cloak of invisibility; the bag of Setsubun beans for warding off oni is still tied shut; her meal is left unfinished.
 
 ### Credit (required by the challenge)
 
