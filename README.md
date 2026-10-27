@@ -4,6 +4,8 @@
 
 ## Progress
 
+**Result: selected as a finalist** (announced Oct 24, 2026 on the RenderMan Discord). Final image: [`outputs/v003_chochin_lantern_cloud.png`](outputs/v003_chochin_lantern_cloud.png).
+
 Work in progress, also posted to the [RenderMan Discord thread](https://discord.com/channels/479703857883250698/1557180427838562304);
 the reasoning behind each step is in the ideation notes, [diorama-drama.md](diorama-drama.md).
 Click a thumbnail for the full-resolution image (the cloud renders are 3840x2160).
@@ -119,6 +121,18 @@ Gotchas found along the way:
   world must be called that (`build_layout.py` does).
 * RANCHecker re-saves the scene file while preparing; that's fine, `paper_soul_v003_render.blend` is regenerated anyway.
 * Tested: the unpacked package renders identically locally, and the first cloud render (Oct 8) came back clean.
+
+## Submission package
+
+A single zip to reproduce the final render, for the finalists' Box upload:
+
+```bash
+python3 tools/make_submission_zip.py build/cloud/paper_soul_v007.vub   # -> build/submission/renderman-challenge-paper-soul.zip (~5.4 GB)
+```
+
+It contains `HOW_TO_RENDER.txt`, `render_package/` (the self-contained scene, textures and OSL shader from the
+final `.vub`), `final/` (the final 4K PNG) and `source/` (this repo without `assets/` and `build/`; add `--no-git`
+to leave out the history). Use the `.vub` that produced the final render (`paper_soul_v007.vub`, the chōchin version).
 
 ## Notes
 
