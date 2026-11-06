@@ -4,7 +4,7 @@
 
 ## Progress
 
-**Result: selected as a finalist** (announced Oct 24, 2026 on the RenderMan Discord). Final image: [`outputs/v003_chochin_lantern_cloud.png`](outputs/v003_chochin_lantern_cloud.png).
+**Result: finalist**, listed as "Paper Soul" in the [official final results](https://renderman.pixar.com/news/renderman-diorama-drama-art-challenge-final-results). Final image: [`outputs/v003_chochin_lantern_cloud.png`](outputs/v003_chochin_lantern_cloud.png).
 
 Work in progress, also posted to the [RenderMan Discord thread](https://discord.com/channels/479703857883250698/1557180427838562304);
 the reasoning behind each step is in the ideation notes, [diorama-drama.md](diorama-drama.md).

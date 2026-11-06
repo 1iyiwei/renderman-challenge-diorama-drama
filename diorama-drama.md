@@ -421,3 +421,8 @@ The newspaper she is reading stays whole at the bottom, cracks more and more tow
 * Testimonial submitted (may be shared on the RenderMan website and in marketing), with full disclosure of the AI-assisted pipeline:
 
   > "My entry started from a dream: drifting like a piece of paper during a restless sleep. As a first-time RenderMan user, I worked with Claude Code, an AI coding agent, to script the whole Blender and RenderMan pipeline: converting the challenge assets, building the layout, writing the OSL shader that fractures the newspaper, and packaging the scene for cloud XPU rendering. I focused on the story, composition, and art direction. Feedback from the RenderMan team on Discord shaped the final image, from the old woman’s drooping pose to the black background and image format, and the cloud rendering let me finish in XPU on a laptop that couldn’t run it natively."
+
+### Final results (Nov 2026)
+
+* Official [final results](https://renderman.pixar.com/news/renderman-diorama-drama-art-challenge-final-results): "Paper Soul" is listed among the 34 finalists.
+* Winners: 1. Julia Chaix, "The Star Who Fell From The Sky"; 2. Antoine Rétif, "One Last String"; 3. Igor Wozniak, "Failed Test".
